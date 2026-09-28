@@ -1,0 +1,31 @@
+name: Restore from backup
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Backup date to restore from (YYYY-MM-DD — see the backups folder)'
+        required: true
+      entries:
+        description: 'Optional: entry numbers to put back exactly as in the backup, e.g. 3,5. Leave blank to bring back deleted entries only.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node restore.js "$BACKUP_DATE" "$ENTRIES"
+        env:
+          ARCHIVE_PASSCODE: ${{ secrets.ARCHIVE_PASSCODE }}
+          BACKUP_DATE: ${{ inputs.date }}
+          ENTRIES: ${{ inputs.entries }}

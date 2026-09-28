@@ -1,66 +1,112 @@
 # Writing Machines — Archive
 
-A shared archive for ENGL 178. The page is hosted on GitHub Pages, and entries are stored
-in Firebase Firestore, so everyone sees the same archive and changes appear live. No more
-exporting and importing JSON.
+A shared archive for ENGL 178. Everyone sees the same entries, and changes appear live —
+no exporting or importing JSON.
 
-- **Reading** is open to anyone with the link.
-- **Adding, editing, or deleting** asks for the class passcode, again after every page reload.
-- **Export Archive (.json)** still downloads a backup snapshot.
+**Live site:** <https://amarella1697.github.io/ENGL-178-Writing-Machines-Website/>
 
-## One-time setup
+## For students
+- Open the link to read the archive. Search and the constellation filters work for everyone.
+- **+ New Entry**, **Edit**, and **Delete** ask for the class passcode (get it from your
+  instructor). It is asked again whenever the page is refreshed.
+- Your changes are saved immediately and show up for everyone else without a refresh.
+- **Export Archive (.json)** downloads a copy of the whole archive.
 
-### 1. Firebase project
-1. Go to <https://console.firebase.google.com> → **Add project** (Google Analytics not needed).
-2. On the project overview, click the **Web** (`</>`) icon to register a web app. Copy the
-   `firebaseConfig` values into [firebase-config.js](firebase-config.js).
-3. **Security → Authentication → Get started → Sign-in method → Anonymous → Enable.**
-4. **Databases & Storage → Firestore → Create database** (production mode, any nearby region).
-5. **Firestore → Rules:** replace everything with the contents of
-   [firestore.rules](firestore.rules), then **Publish**.
-6. **Set the class passcode:** Firestore → **Data** → **Start collection** → Collection ID
-   `passcodes` → Document ID = the passcode (e.g. `machines-178`) → add any field
-   (e.g. `note` = `class passcode`) → Save.
+## For the teacher
 
-### 2. Load the existing entries (once)
+### Quick links
+| What | Where |
+| --- | --- |
+| Live site | <https://amarella1697.github.io/ENGL-178-Writing-Machines-Website/> |
+| GitHub repo | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website> |
+| Nightly backups (last 14 days) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/tree/main/backups> |
+| Run a backup now | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/actions/workflows/backup.yml> → **Run workflow** |
+| Restore from a backup | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/actions/workflows/restore.yml> → **Run workflow** |
+| Edit the page (text, layout, colors) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/edit/main/index.html> |
+| GitHub collaborators | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/access> |
+| GitHub secret for restores (`ARCHIVE_PASSCODE`) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/secrets/actions> |
+| GitHub Pages settings | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/pages> |
+| Firebase project | <https://console.firebase.google.com/project/writing-machines-website/overview> |
+| Firestore data & rules (entries, passcode) | <https://console.firebase.google.com/project/writing-machines-website/firestore> — **Data** and **Rules** tabs |
+| Firebase sign-in settings | <https://console.firebase.google.com/project/writing-machines-website/authentication/providers> |
+| Firebase members | <https://console.firebase.google.com/project/writing-machines-website/settings/iam> |
+
+### Getting access (one time)
+- **GitHub:** the repo owner adds you under *GitHub collaborators* above. Accept the invite
+  from your email. This lets you run backups/restores and edit the page.
+- **Firebase:** the project owner adds your Google account under *Firebase members* above
+  (role *Editor* or *Owner*). This lets you change the passcode and view the raw data.
+
+### Common tasks
+
+**Change the class passcode**
+1. Firestore → **Data** tab → `passcodes` collection → delete the old document.
+2. **Add document** → Document ID = the new passcode (type it; don't use Auto-ID) → add a
+   field `note` = `class passcode` → Save. Students need the new code from their next refresh.
+3. Update the GitHub secret `ARCHIVE_PASSCODE` (link above) to the new passcode, so restores
+   keep working.
+
+To lock out pages that are already open and unlocked, also delete the `unlocked` collection.
+
+**Bring back deleted entries**
+1. Open *Restore from a backup* (link above) → **Run workflow**.
+2. **date:** pick a date from the backups folder from *before* the deletion, e.g. `2026-09-28`.
+3. Leave **entries** blank → **Run workflow**.
+
+Every entry that is in that backup but missing from the archive comes back under its original
+number. Entries that still exist are not touched. Click the finished run to see what was restored.
+
+**Undo a bad edit**
+Same as above, but type the entry number(s) in **entries**, e.g. `7` or `3,5`. Those entries are
+put back exactly as they were in that backup.
+
+**Edit the archive's subtitle, "by" line, or introduction**
+Click the text at the top of the live site, type, then click elsewhere. It asks for the passcode
+and saves for everyone.
+
+**Change the page itself**
+Edit `index.html` on GitHub (link above) and click **Commit changes**. The live site updates in
+about a minute.
+
+**Backups older than 14 days**
+Only the newest 14 stay in the `backups` folder, but every older one is still in the repo's
+history: open the `backups` folder → **History**, find the day, and download that file. Restore
+from it by running `restore.js` locally (see *Scripts* below) with the file's path.
+
+## How it works
+- [index.html](index.html) is the whole site, served by GitHub Pages.
+- Entries live in Firebase Firestore. The page reads and writes them directly.
+- [firestore.rules](firestore.rules) lets anyone read, but only lets a browser write after it
+  has sent a passcode that matches a document in the `passcodes` collection. Each browser gets
+  an invisible anonymous Firebase sign-in so the rules can tell browsers apart; students never
+  see a login.
+- [backup.js](backup.js) runs nightly at 08:00 UTC via
+  [.github/workflows/backup.yml](.github/workflows/backup.yml) and commits
+  `backups/YYYY-MM-DD.json`, keeping the newest 14.
+- [restore.js](restore.js) runs via [.github/workflows/restore.yml](.github/workflows/restore.yml).
+
+## Scripts (run locally, after `npm install`)
 ```
-npm install
-node seed.js <the passcode>
+# PowerShell
+$env:ARCHIVE_PASSCODE = "<passcode>"
+node restore.js 2026-09-28            # bring back deleted entries
+node restore.js 2026-09-28 3,5        # put entries 3 and 5 back as they were
+node restore.js path\to\backup.json   # restore from a downloaded backup file
+node backup.js                        # write today's backup to backups/
 ```
-This copies the 10 entries from `writing-machines-archive-2.json` into Firestore. It refuses
-to run if the archive already has data.
+`node seed.js <passcode>` loaded the original entries from `writing-machines-archive-2.json`;
+it refuses to run if the archive already has data.
 
-### 3. GitHub Pages
-1. Create an empty repo on github.com (public; Pages on a private repo needs a paid plan).
-2. Push this folder:
-   ```
-   git remote add origin https://github.com/<you>/<repo>.git
-   git push -u origin main
-   ```
-3. Repo **Settings → Pages → Build and deployment:** Source = *Deploy from a branch*,
-   Branch = `main`, folder = `/ (root)`. The site appears at `https://<you>.github.io/<repo>/`.
-4. Back in Firebase: **Security → Authentication → Settings → Authorized domains → Add domain**
-   `<you>.github.io`.
+To preview the site locally, run `npx serve .` (the page can't be opened by double-clicking).
 
-## Managing the passcode
-- **Change it:** in Firestore → `passcodes`, delete the old document and add a new one.
-  Everyone needs the new passcode from their next page load.
-- **Cut off pages that are already open and unlocked:** also delete the `unlocked` collection.
+## Original setup (already done)
+1. Firebase project → **Web** app registered; config in [firebase-config.js](firebase-config.js).
+2. **Security → Authentication → Sign-in method → Anonymous** enabled.
+3. **Databases & Storage → Firestore → Create database** (production mode); rules from
+   [firestore.rules](firestore.rules) published; `passcodes/<passcode>` document created.
+4. `npm install` then `node seed.js <passcode>`.
+5. GitHub Pages: Settings → Pages → *Deploy from a branch*, `main`, `/ (root)`.
+6. GitHub secret `ARCHIVE_PASSCODE` set to the class passcode (used by restores).
 
-## Nightly backups
-Every night at 08:00 UTC, [a GitHub Action](.github/workflows/backup.yml) runs
-[backup.js](backup.js) and commits a snapshot of the archive to `backups/YYYY-MM-DD.json`
-(same format as the Export button). Only the newest 14 are kept in the folder; older ones are
-removed but can still be found in the repo's commit history. To recover a deleted entry, open an older backup file in
-the `backups` folder and copy the entry back in through the page. To take a backup right away,
-go to the repo's **Actions** tab → **Nightly backup** → **Run workflow**.
-
-## Local testing
-The page uses ES modules, so open it through a local server instead of double-clicking it:
-```
-npx serve .
-```
-
-## Note on the API key
-The `apiKey` in `firebase-config.js` is a public identifier, not a secret; Firebase's own docs
-say it's safe to commit. Access is enforced by `firestore.rules`.
+The `apiKey` in `firebase-config.js` is a public identifier, not a secret; Firebase's docs say
+it's safe to commit. Access is enforced by `firestore.rules`.
