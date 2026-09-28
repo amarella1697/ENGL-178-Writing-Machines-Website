@@ -344,6 +344,7 @@
     border-radius: 2px;
   }
   .form-card h2 { font-size: 20px; margin: 0 0 4px; font-weight: 400; }
+  .form-card.pass-card { max-width: 400px; }
   .form-card .form-sub {
     font-family: 'Courier New', monospace;
     font-size: 11px;
@@ -373,6 +374,7 @@
   }
   .field input[type="text"],
   .field input[type="url"],
+  .field input[type="password"],
   .field textarea,
   .field select {
     width: 100%;
@@ -512,10 +514,27 @@
   </div>
 </div>
 
+<!-- Passcode modal -->
+<div class="overlay hidden" id="passOverlay">
+  <div class="form-card pass-card">
+    <h2>Passcode</h2>
+    <div class="form-sub">Enter the class passcode to add or change entries</div>
+    <div class="field">
+      <label for="fPasscode" class="sr-only">Passcode</label>
+      <input type="password" id="fPasscode" autocomplete="off">
+    </div>
+    <div class="error-text" id="passError"></div>
+    <div class="form-actions">
+      <button id="btnPassCancel">Cancel</button>
+      <button class="primary" id="btnPassEnter">Enter</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
-import { getFirestore, collection, doc, onSnapshot, getDoc, setDoc, runTransaction, writeBatch } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { getFirestore, collection, doc, onSnapshot, setDoc, runTransaction, writeBatch } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import firebaseConfig from './firebase-config.js';
 
 (function() {
@@ -540,21 +559,37 @@ import firebaseConfig from './firebase-config.js';
   const el = id => document.getElementById(id);
 
   // ── PASSCODE ──
-  // Writes are allowed only from browsers that have entered the class passcode once
-  // (see firestore.rules). The unlock is remembered per browser.
-  async function ensureUnlocked() {
-    if (unlocked) return true;
-    const user = auth.currentUser;
-    if (!user) { alert('Still connecting to the archive — try again in a moment.'); return false; }
-    const code = prompt('Enter the class passcode to add or change entries:');
-    if (!code) return false;
+  // Writes are allowed only from browsers that have entered the class passcode
+  // (see firestore.rules). It is asked again after every page load.
+  let resolvePass = null;
+
+  function ensureUnlocked() {
+    if (unlocked) return Promise.resolve(true);
+    if (!auth.currentUser) { alert('Still connecting to the archive — try again in a moment.'); return Promise.resolve(false); }
+    el('fPasscode').value = '';
+    el('passError').textContent = '';
+    el('passOverlay').classList.remove('hidden');
+    el('fPasscode').focus();
+    return new Promise(resolve => { resolvePass = resolve; });
+  }
+
+  function closePass(result) {
+    el('passOverlay').classList.add('hidden');
+    if (resolvePass) { resolvePass(result); resolvePass = null; }
+  }
+
+  async function submitPass() {
+    const code = el('fPasscode').value.trim();
+    if (!code) return;
+    el('btnPassEnter').disabled = true;
     try {
-      await setDoc(doc(db, 'unlocked', user.uid), { code: code.trim() });
+      await setDoc(doc(db, 'unlocked', auth.currentUser.uid), { code });
       unlocked = true;
-      return true;
+      closePass(true);
     } catch (err) {
-      alert('That passcode did not work.');
-      return false;
+      el('passError').textContent = 'That passcode did not work.';
+    } finally {
+      el('btnPassEnter').disabled = false;
     }
   }
 
@@ -791,9 +826,8 @@ import firebaseConfig from './firebase-config.js';
     });
   });
 
-  onAuthStateChanged(auth, async user => {
-    if (!user) { signInAnonymously(auth).catch(err => { el('footerHint').textContent = 'Could not connect: ' + err.message; }); return; }
-    try { unlocked = (await getDoc(doc(db, 'unlocked', user.uid))).exists(); } catch (err) { unlocked = false; }
+  onAuthStateChanged(auth, user => {
+    if (!user) signInAnonymously(auth).catch(err => { el('footerHint').textContent = 'Could not connect: ' + err.message; });
   });
 
   // ── WIRE UP ──
@@ -801,7 +835,15 @@ import firebaseConfig from './firebase-config.js';
   el('btnCancel').addEventListener('click', closeForm);
   el('btnSave').addEventListener('click', saveEntry);
   el('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeForm(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !el('overlay').classList.contains('hidden')) closeForm(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!el('passOverlay').classList.contains('hidden')) closePass(false);
+    else if (!el('overlay').classList.contains('hidden')) closeForm();
+  });
+  el('btnPassEnter').addEventListener('click', submitPass);
+  el('btnPassCancel').addEventListener('click', () => closePass(false));
+  el('passOverlay').addEventListener('click', e => { if (e.target.id === 'passOverlay') closePass(false); });
+  el('fPasscode').addEventListener('keydown', e => { if (e.key === 'Enter') submitPass(); });
   el('searchInput').addEventListener('input', render);
   el('btnExport').addEventListener('click', exportArchive);
 

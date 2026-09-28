@@ -19,10 +19,11 @@ service cloud.firestore {
     }
 
     // A browser unlocks itself by writing the passcode here. The write only succeeds
-    // if a document named after that passcode exists in /passcodes.
+    // if a document named after that passcode exists in /passcodes. Update is allowed
+    // so the page can re-check the passcode after every reload.
     match /unlocked/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null && request.auth.uid == uid
+      allow create, update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['code'])
         && request.resource.data.code is string
         && request.resource.data.code.size() < 100
