@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Writing Machines — Archive</title>
+<style>
+  :root {
+    --paper: #E6E7E8;
+    --paper-raised: #F1F2F2;
+    --ink: #1A1A2E;
+    --ink-soft: #4A4A63;
+    --stamp: #C6488C;
+    --stamp-soft: #DFA0C2;
+    --sage: #00A896;
+    --sage-soft: #8CD4CB;
+    --rule: #B7B8BA;
+    --rule-light: #D3D4D5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,0,0,0.015) 40px);
+    color: var(--ink);
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 24px 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  header h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    margin: 0 0 8px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle-field {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border: none;
+    background: transparent;
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 2px 4px;
+    display: block;
+    margin: 0 auto 16px;
+  }
+  .subtitle-field:focus { outline: none; border-bottom: 1px dotted var(--rule); }
+  .subtitle-field::placeholder { color: var(--rule); }
+
+  .by-line {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .by-line input {
+    font-family: Georgia, serif;
+    font-style: italic;
+    border: none;
+    border-bottom: 1px dotted var(--rule);
+    background: transparent;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 2px 4px;
+    width: 340px;
+  }
+  .by-line input:focus { outline: none; border-bottom-color: var(--stamp); }
+
+  .intro-field {
+    display: block;
+    margin: 0 auto;
+    max-width: 680px;
+    width: 100%;
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+    border: none;
+    border-bottom: 1px dotted var(--rule-light);
+    background: transparent;
+    text-align: center;
+    padding: 4px 8px 6px;
+    resize: none;
+    min-height: 32px;
+  }
+  .intro-field:focus { outline: none; border-bottom-color: var(--stamp); }
+  .intro-field::placeholder { color: var(--rule); font-style: italic; }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .toolbar-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 220px;
+    max-width: 400px;
+  }
+  .search-wrap input {
+    width: 100%;
+    padding: 9px 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  .search-wrap input:focus { outline: none; border-color: var(--stamp); }
+
+  button {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--paper-raised);
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    padding: 9px 14px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.15s, color 0.15s;
+  }
+  button:hover { background: var(--ink); color: var(--paper); }
+  button:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+  button.primary { background: var(--stamp); border-color: var(--stamp); color: var(--paper); }
+  button.primary:hover { background: #9c356a; border-color: #9c356a; }
+
+  /* ── CONSTELLATIONS (top, horizontal) ── */
+  .constellations-bar {
+    max-width: 1200px;
+    margin: 20px auto 0;
+    padding: 0 24px;
+  }
+  .constellations-bar h2 {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+  }
+  .constellation-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .constellation-pill {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .constellation-pill:hover { border-color: var(--ink); color: var(--ink); background: var(--paper-raised); }
+  .constellation-pill.active { background: var(--stamp); border-color: var(--stamp); color: var(--paper); font-weight: bold; }
+  .constellation-pill .pill-count {
+    margin-left: 6px;
+    opacity: 0.6;
+    font-size: 10px;
+  }
+
+  /* ── ENTRY COUNT ── */
+  .count-bar {
+    max-width: 1200px;
+    margin: 16px auto 0;
+    padding: 0 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ── MASONRY GRID ── */
+  .entries-grid {
+    max-width: 1200px;
+    margin: 16px auto 60px;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+    gap: 18px;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    border: 1px dashed var(--rule);
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+  .empty-state .big { font-size: 17px; margin-bottom: 10px; }
+
+  /* ── SQUARE CARD ── */
+  .card {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 18px 18px 14px;
+    position: relative;
+    box-shadow: 2px 3px 0 rgba(26,26,46,0.05);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stamp-corner {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    background: var(--stamp);
+    color: var(--paper);
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 0 2px 0 6px;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    padding-right: 70px;
+  }
+  .card-meta .source-link { color: var(--sage); text-decoration: underline; text-decoration-style: dotted; }
+  .card-meta .source-link:hover { color: var(--stamp); }
+  .card-meta .entrant { color: var(--stamp); font-weight: bold; }
+
+  .card-fragment {
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+  .card-fragment.is-quote {
+    padding-left: 12px;
+    border-left: 2px solid var(--rule);
+    font-style: italic;
+  }
+
+  .card-annotation {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin: 0 0 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-top: 1px solid var(--rule-light);
+    padding-top: 8px;
+    margin-top: auto;
+  }
+
+  .tag-pill {
+    font-family: 'Courier New', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid var(--sage);
+    color: var(--sage);
+    padding: 2px 7px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .tag-pill:hover { background: var(--sage); color: var(--paper); }
+
+  .card-xref {
+    font-size: 11px;
+    color: var(--sage);
+    font-style: italic;
+  }
+  .card-xref a { color: var(--sage); cursor: pointer; text-decoration: underline; }
+
+  .card-actions { display: flex; gap: 4px; }
+  .card-actions button { font-size: 9px; padding: 4px 8px; }
+
+  /* ── MODAL FORM ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,46,0.55);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+    z-index: 50;
+  }
+  .overlay.hidden { display: none; }
+
+  .form-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--ink);
+    max-width: 560px;
+    width: 100%;
+    padding: 28px 28px 24px;
+    border-radius: 2px;
+  }
+  .form-card h2 { font-size: 20px; margin: 0 0 4px; font-weight: 400; }
+  .form-card .form-sub {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .field .hint {
+    font-family: -apple-system, sans-serif;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 12px;
+    color: var(--rule);
+    display: block;
+    margin-top: 3px;
+  }
+  .field input[type="text"],
+  .field input[type="url"],
+  .field textarea,
+  .field select {
+    width: 100%;
+    padding: 9px 10px;
+    font-family: Georgia, serif;
+    font-size: 14px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--paper);
+    color: var(--ink);
+    resize: vertical;
+  }
+  .field textarea { min-height: 70px; font-family: -apple-system, sans-serif; }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--stamp); }
+
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
+  .checkbox-row input { width: auto; }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+    border-top: 1px solid var(--rule-light);
+    padding-top: 18px;
+  }
+
+  .error-text { font-family: 'Courier New', monospace; font-size: 11px; color: var(--stamp); margin-top: 4px; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  footer {
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    padding: 0 24px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--rule);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Writing Machines</h1>
+  <input class="subtitle-field" type="text" id="subtitleField" placeholder="subtitle…" aria-label="Archive subtitle">
+  <div class="by-line">
+    by <input type="text" id="byField" placeholder="Dr. Edoro and her English 178 Class" aria-label="Archive by line">
+  </div>
+  <textarea class="intro-field" id="introField" rows="2" placeholder="A short introduction to the archive…" aria-label="Archive introduction"></textarea>
+</header>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="search fragments, sources, annotations, entrants…" aria-label="Search entries">
+  </div>
+  <div class="toolbar-group">
+    <button class="primary" id="btnNewEntry">+ New Entry</button>
+    <button id="btnExport">Export Archive (.json)</button>
+  </div>
+</div>
+
+<div class="constellations-bar">
+  <h2>Constellations</h2>
+  <div class="constellation-pills" id="constellationPills"></div>
+</div>
+
+<div class="count-bar">
+  <span id="countLine"></span>
+</div>
+
+<div class="entries-grid" id="entriesList"></div>
+
+<footer id="footerHint"></footer>
+
+<!-- Entry form modal -->
+<div class="overlay hidden" id="overlay">
+  <div class="form-card">
+    <h2 id="formTitle">New Entry</h2>
+    <div class="form-sub">FRAGMENT NO. <span id="formCardNum">—</span></div>
+
+    <div class="field">
+      <label for="fEntrant">Entered by</label>
+      <input type="text" id="fEntrant" placeholder="Student name">
+    </div>
+
+    <div class="field">
+      <label for="fFragment">The fragment</label>
+      <textarea id="fFragment" placeholder="A quotation, a field note, a description, a found object…"></textarea>
+    </div>
+
+    <div class="field checkbox-row">
+      <input type="checkbox" id="fIsQuote">
+      <label for="fIsQuote" style="margin:0; text-transform:none; font-family:inherit; font-size:13px; letter-spacing:0;">This is a direct quotation from a source</label>
+    </div>
+
+    <div class="field">
+      <label for="fImageUrl">Image URL <span class="hint" style="display:inline">(optional)</span></label>
+      <input type="url" id="fImageUrl" placeholder="https://…">
+    </div>
+
+    <div class="field">
+      <label for="fAnnotation">Annotation</label>
+      <textarea id="fAnnotation" placeholder="The flash of insight that made you include this — not a summary, a thought."></textarea>
+    </div>
+
+    <div class="field">
+      <label for="fSource">Source</label>
+      <input type="text" id="fSource" placeholder="Author, title, year — or week, experiment, etc.">
+    </div>
+
+    <div class="field">
+      <label for="fSourceUrl">Source URL <span class="hint" style="display:inline">(optional)</span></label>
+      <input type="url" id="fSourceUrl" placeholder="https://…">
+    </div>
+
+    <div class="field">
+      <label for="fCategory">Constellation <span class="hint" style="display:inline">(new or existing)</span></label>
+      <input type="text" id="fCategory" list="categoryOptions" placeholder="e.g. Things That Work Without Understanding">
+      <datalist id="categoryOptions"></datalist>
+    </div>
+
+    <div class="field">
+      <label for="fXref">Cross-reference <span class="hint" style="display:inline">(optional)</span></label>
+      <select id="fXref">
+        <option value="">— none —</option>
+      </select>
+    </div>
+
+    <div class="error-text" id="formError"></div>
+
+    <div class="form-actions">
+      <button id="btnCancel">Cancel</button>
+      <button class="primary" id="btnSave">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+import { getFirestore, collection, doc, onSnapshot, getDoc, setDoc, runTransaction, writeBatch } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import firebaseConfig from './firebase-config.js';
+
+(function() {
+  'use strict';
+
+  const HINT = 'Entries are saved automatically to the shared class archive. Export downloads a .json backup.';
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const metaRef = doc(db, 'meta', 'archive');
+  const HEADER_FIELDS = { subtitleField: 'subtitle', byField: 'by', introField: 'intro' };
+
+  let entries = [];
+  let nextId = 1;
+  let meta = {};
+  let activeTag = null;
+  let unlocked = false;
+
+  let editingId = null;
+
+  const el = id => document.getElementById(id);
+
+  // ── PASSCODE ──
+  // Writes are allowed only from browsers that have entered the class passcode once
+  // (see firestore.rules). The unlock is remembered per browser.
+  async function ensureUnlocked() {
+    if (unlocked) return true;
+    const user = auth.currentUser;
+    if (!user) { alert('Still connecting to the archive — try again in a moment.'); return false; }
+    const code = prompt('Enter the class passcode to add or change entries:');
+    if (!code) return false;
+    try {
+      await setDoc(doc(db, 'unlocked', user.uid), { code: code.trim() });
+      unlocked = true;
+      return true;
+    } catch (err) {
+      alert('That passcode did not work.');
+      return false;
+    }
+  }
+
+  // ── TAG / CONSTELLATION LIST ──
+  function renderConstellations() {
+    const counts = {};
+    entries.forEach(e => {
+      const cat = e.category || 'Uncategorized';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    const cats = Object.keys(counts).sort((a,b) => a.localeCompare(b));
+
+    const container = el('constellationPills');
+    container.innerHTML = '';
+
+    const allPill = document.createElement('button');
+    allPill.className = 'constellation-pill' + (activeTag === null ? ' active' : '');
+    allPill.innerHTML = `All <span class="pill-count">${entries.length}</span>`;
+    allPill.onclick = () => { activeTag = null; render(); };
+    container.appendChild(allPill);
+
+    cats.forEach(cat => {
+      const pill = document.createElement('button');
+      pill.className = 'constellation-pill' + (activeTag === cat ? ' active' : '');
+      pill.innerHTML = `${escapeHtml(cat)} <span class="pill-count">${counts[cat]}</span>`;
+      pill.onclick = () => { activeTag = (activeTag === cat ? null : cat); render(); };
+      container.appendChild(pill);
+    });
+
+    // datalist
+    const dl = el('categoryOptions');
+    dl.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  function getFiltered() {
+    const q = el('searchInput').value.trim().toLowerCase();
+    return entries.filter(e => {
+      if (activeTag !== null && (e.category || 'Uncategorized') !== activeTag) return false;
+      if (!q) return true;
+      const hay = [e.fragment, e.annotation, e.source, e.category, e.entrant].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function findEntry(id) { return entries.find(e => e.id === id); }
+
+  // ── RENDER ENTRIES ──
+  function renderEntries() {
+    const list = el('entriesList');
+    const filtered = getFiltered().sort((a,b) => b.id - a.id);
+
+    if (entries.length === 0) {
+      list.innerHTML = `<div class="empty-state"><p class="big">The archive is empty.</p><p>Click <strong>+ New Entry</strong> to add the first fragment.</p></div>`;
+      return;
+    }
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><p class="big">No entries match.</p><p>Try a different search term or clear the constellation filter.</p></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(e => {
+      const xref = e.xrefId ? findEntry(e.xrefId) : null;
+      return `
+        <article class="card">
+          <div class="stamp-corner">${escapeHtml(e.category || 'Uncategorized')}</div>
+          <div class="card-meta">
+            <span>NO. ${String(e.id).padStart(3,'0')}</span>
+            ${e.entrant ? `<span class="entrant">${escapeHtml(e.entrant)}</span>` : ''}
+            ${e.source ? `<span>${e.sourceUrl ? `<a href="${escapeHtml(e.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(e.source)}</a>` : escapeHtml(e.source)}</span>` : ''}
+          </div>
+          <p class="card-fragment${e.isQuote ? ' is-quote' : ''}">${escapeHtml(e.fragment)}</p>
+          ${e.annotation ? `<p class="card-annotation">${escapeHtml(e.annotation)}</p>` : ''}
+          <div class="card-footer">
+            <span class="tag-pill" data-cat="${escapeHtml(e.category || 'Uncategorized')}">${escapeHtml(e.category || 'Uncategorized')}</span>
+            ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${String(xref.id).padStart(3,'0')}</a></div>` : ''}
+            <div class="card-actions">
+              <button data-edit="${e.id}">Edit</button>
+              <button data-delete="${e.id}">Delete</button>
+            </div>
+          </div>
+        </article>`;
+    }).join('');
+
+    list.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', async () => { if (await ensureUnlocked()) openForm(parseInt(btn.dataset.edit, 10)); }));
+    list.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteEntry(parseInt(btn.dataset.delete, 10))));
+    list.querySelectorAll('[data-goto]').forEach(a => {
+      a.addEventListener('click', () => {
+        activeTag = null; el('searchInput').value = ''; render();
+        const t = document.querySelector(`[data-edit="${a.dataset.goto}"]`);
+        if (t) t.closest('.card').scrollIntoView({behavior:'smooth', block:'center'});
+      });
+    });
+    list.querySelectorAll('.tag-pill').forEach(pill => pill.addEventListener('click', () => { activeTag = pill.dataset.cat; render(); }));
+  }
+
+  function renderCount() {
+    const total = entries.length;
+    const shown = getFiltered().length;
+    el('countLine').textContent = total === 0 ? '' : `${shown} of ${total} fragments`;
+    el('footerHint').textContent = HINT;
+  }
+
+  function render() {
+    renderConstellations();
+    renderEntries();
+    renderCount();
+  }
+
+  // ── FORM ──
+  function openForm(id) {
+    editingId = id || null;
+    const entry = id ? findEntry(id) : null;
+
+    el('formTitle').textContent = entry ? 'Edit Entry' : 'New Entry';
+    el('formCardNum').textContent = entry ? String(entry.id).padStart(3,'0') : String(nextId).padStart(3,'0');
+    el('fEntrant').value = entry ? (entry.entrant || '') : '';
+    el('fFragment').value = entry ? entry.fragment : '';
+    el('fIsQuote').checked = entry ? !!entry.isQuote : false;
+    el('fImageUrl').value = entry ? (entry.imageUrl || '') : '';
+    el('fAnnotation').value = entry ? (entry.annotation || '') : '';
+    el('fSource').value = entry ? (entry.source || '') : '';
+    el('fSourceUrl').value = entry ? (entry.sourceUrl || '') : '';
+    el('fCategory').value = entry ? (entry.category || '') : '';
+    el('formError').textContent = '';
+
+    const xrefSelect = el('fXref');
+    xrefSelect.innerHTML = '<option value="">— none —</option>' + entries
+      .filter(e => !entry || e.id !== entry.id)
+      .sort((a,b) => a.id - b.id)
+      .map(e => `<option value="${e.id}">No. ${String(e.id).padStart(3,'0')} — ${escapeHtml(e.fragment.slice(0,50))}${e.fragment.length>50?'…':''}</option>`)
+      .join('');
+    xrefSelect.value = entry && entry.xrefId ? String(entry.xrefId) : '';
+
+    el('overlay').classList.remove('hidden');
+    el('fEntrant').focus();
+  }
+
+  function closeForm() { el('overlay').classList.add('hidden'); editingId = null; }
+
+  async function saveEntry() {
+    const fragment = el('fFragment').value.trim();
+    if (!fragment) { el('formError').textContent = 'The fragment cannot be empty.'; return; }
+    const data = {
+      entrant: el('fEntrant').value.trim(),
+      fragment,
+      isQuote: el('fIsQuote').checked,
+      imageUrl: el('fImageUrl').value.trim(),
+      annotation: el('fAnnotation').value.trim(),
+      source: el('fSource').value.trim(),
+      sourceUrl: el('fSourceUrl').value.trim(),
+      category: el('fCategory').value.trim() || 'Uncategorized',
+      xrefId: el('fXref').value ? parseInt(el('fXref').value, 10) : null
+    };
+    el('btnSave').disabled = true;
+    try {
+      if (editingId) {
+        await setDoc(doc(db, 'entries', String(editingId)), Object.assign({id: editingId}, data));
+      } else {
+        // Transaction so two students saving at once never get the same number.
+        await runTransaction(db, async tx => {
+          const m = (await tx.get(metaRef)).data() || {};
+          const id = Math.max(m.nextId || 1, ...entries.map(e => e.id + 1));
+          tx.set(doc(db, 'entries', String(id)), Object.assign({id}, data));
+          tx.set(metaRef, {nextId: id + 1}, {merge: true});
+        });
+      }
+      closeForm();
+    } catch (err) {
+      el('formError').textContent = 'Could not save: ' + err.message;
+    } finally {
+      el('btnSave').disabled = false;
+    }
+  }
+
+  async function deleteEntry(id) {
+    if (!confirm('Delete this entry? This cannot be undone unless you have an exported backup.')) return;
+    if (!await ensureUnlocked()) return;
+    const batch = writeBatch(db);
+    batch.delete(doc(db, 'entries', String(id)));
+    entries.forEach(e => { if (e.xrefId === id) batch.update(doc(db, 'entries', String(e.id)), {xrefId: null}); });
+    try { await batch.commit(); } catch (err) { alert('Could not delete: ' + err.message); }
+  }
+
+  // ── EXPORT ──
+  function exportArchive() {
+    if (entries.length === 0) { alert('The archive is empty — nothing to export yet.'); return; }
+    const ok = confirm(`You are about to export ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}.\n\nMake sure every fragment, annotation, and constellation is complete.\n\nExport now?`);
+    if (!ok) return;
+    const payload = {
+      subtitle: el('subtitleField').value.trim(),
+      by: el('byField').value.trim(),
+      intro: el('introField').value.trim(),
+      exportedAt: new Date().toISOString(),
+      nextId,
+      entries
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `writing-machines-archive.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── LIVE SYNC ──
+  onSnapshot(collection(db, 'entries'), snap => {
+    entries = snap.docs.map(d => d.data());
+    render();
+  }, err => { el('footerHint').textContent = 'Could not load the archive: ' + err.message; });
+
+  onSnapshot(metaRef, snap => {
+    meta = snap.data() || {};
+    nextId = meta.nextId || 1;
+    // Don't overwrite a header field someone is typing in.
+    Object.entries(HEADER_FIELDS).forEach(([id, key]) => {
+      if (document.activeElement !== el(id)) el(id).value = meta[key] || '';
+    });
+  });
+
+  Object.entries(HEADER_FIELDS).forEach(([id, key]) => {
+    el(id).addEventListener('change', async () => {
+      if (!await ensureUnlocked()) { el(id).value = meta[key] || ''; return; }
+      try { await setDoc(metaRef, {[key]: el(id).value.trim()}, {merge: true}); }
+      catch (err) { alert('Could not save: ' + err.message); }
+    });
+  });
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) { signInAnonymously(auth).catch(err => { el('footerHint').textContent = 'Could not connect: ' + err.message; }); return; }
+    try { unlocked = (await getDoc(doc(db, 'unlocked', user.uid))).exists(); } catch (err) { unlocked = false; }
+  });
+
+  // ── WIRE UP ──
+  el('btnNewEntry').addEventListener('click', async () => { if (await ensureUnlocked()) openForm(null); });
+  el('btnCancel').addEventListener('click', closeForm);
+  el('btnSave').addEventListener('click', saveEntry);
+  el('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeForm(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !el('overlay').classList.contains('hidden')) closeForm(); });
+  el('searchInput').addEventListener('input', render);
+  el('btnExport').addEventListener('click', exportArchive);
+
+  render();
+})();
+</script>
+</body>
+</html>

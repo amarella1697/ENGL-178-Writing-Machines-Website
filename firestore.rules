@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A browser is "unlocked" once it has proven it knows the class passcode.
+    function unlocked() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/unlocked/$(request.auth.uid));
+    }
+
+    // Anyone can read the archive; only unlocked browsers can change it.
+    match /entries/{id} {
+      allow read: if true;
+      allow write: if unlocked();
+    }
+    match /meta/{doc} {
+      allow read: if true;
+      allow write: if unlocked();
+    }
+
+    // A browser unlocks itself by writing the passcode here. The write only succeeds
+    // if a document named after that passcode exists in /passcodes.
+    match /unlocked/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code'])
+        && request.resource.data.code is string
+        && request.resource.data.code.size() < 100
+        && exists(/databases/$(database)/documents/passcodes/$(request.resource.data.code));
+    }
+
+    // /passcodes has no rules, so browsers can never read or list it.
+  }
+}

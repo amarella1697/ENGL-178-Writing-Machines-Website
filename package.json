@@ -1,0 +1,11 @@
+{
+  "name": "writing-machines-archive",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0"
+  }
+}
