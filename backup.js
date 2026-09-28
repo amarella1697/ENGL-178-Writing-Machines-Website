@@ -8,10 +8,11 @@ import firebaseConfig from './firebase-config.js';
 const base = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`;
 const key = `key=${firebaseConfig.apiKey}`;
 
-// Firestore REST returns typed values, e.g. { stringValue: 'x' } or { integerValue: '3' }.
+// Firestore REST returns typed values, e.g. { stringValue: 'x' } or { integerValue: '3' },
+// in no fixed order; keys are sorted so backups only differ when the data does.
 function plain(fields = {}) {
   const out = {};
-  for (const [name, v] of Object.entries(fields)) {
+  for (const [name, v] of Object.entries(fields).sort(([a], [b]) => a.localeCompare(b))) {
     if ('stringValue' in v) out[name] = v.stringValue;
     else if ('integerValue' in v) out[name] = Number(v.integerValue);
     else if ('doubleValue' in v) out[name] = v.doubleValue;
