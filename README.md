@@ -50,7 +50,8 @@ to run if the archive already has data.
 ## Nightly backups
 Every night at 08:00 UTC, [a GitHub Action](.github/workflows/backup.yml) runs
 [backup.js](backup.js) and commits a snapshot of the archive to `backups/YYYY-MM-DD.json`
-(same format as the Export button). To recover a deleted entry, open an older backup file in
+(same format as the Export button). Only the newest 14 are kept in the folder; older ones are
+removed but can still be found in the repo's commit history. To recover a deleted entry, open an older backup file in
 the `backups` folder and copy the entry back in through the page. To take a backup right away,
 go to the repo's **Actions** tab → **Nightly backup** → **Run workflow**.
 

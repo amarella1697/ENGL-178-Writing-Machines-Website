@@ -1,8 +1,8 @@
-// Save a snapshot of the archive to backups/YYYY-MM-DD.json (run nightly by
+// Save a snapshot of the archive to backups/YYYY-MM-DD.json, keeping the last 14 (run nightly by
 // .github/workflows/backup.yml). Uses Firestore's REST API, which needs no
 // credentials because the archive is publicly readable.
 // Output has the same shape as the page's Export button.
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import firebaseConfig from './firebase-config.js';
 
 const base = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`;
@@ -49,7 +49,15 @@ const payload = {
   entries
 };
 
-mkdirSync(new URL('./backups/', import.meta.url), { recursive: true });
-const file = `backups/${now.toISOString().slice(0, 10)}.json`;
-writeFileSync(new URL(`./${file}`, import.meta.url), JSON.stringify(payload, null, 2) + '\n');
-console.log(`Saved ${entries.length} entries to ${file}`);
+const dir = new URL('./backups/', import.meta.url);
+mkdirSync(dir, { recursive: true });
+const file = `${now.toISOString().slice(0, 10)}.json`;
+writeFileSync(new URL(file, dir), JSON.stringify(payload, null, 2) + '\n');
+console.log(`Saved ${entries.length} entries to backups/${file}`);
+
+// Keep only the newest KEEP_DAYS backups (older ones remain in git history).
+const KEEP_DAYS = 14;
+readdirSync(dir).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().slice(0, -KEEP_DAYS).forEach(f => {
+  unlinkSync(new URL(f, dir));
+  console.log(`Removed old backup backups/${f}`);
+});
