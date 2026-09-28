@@ -47,6 +47,13 @@ to run if the archive already has data.
   Everyone needs the new passcode from their next page load.
 - **Cut off pages that are already open and unlocked:** also delete the `unlocked` collection.
 
+## Nightly backups
+Every night at 08:00 UTC, [a GitHub Action](.github/workflows/backup.yml) runs
+[backup.js](backup.js) and commits a snapshot of the archive to `backups/YYYY-MM-DD.json`
+(same format as the Export button). To recover a deleted entry, open an older backup file in
+the `backups` folder and copy the entry back in through the page. To take a backup right away,
+go to the repo's **Actions** tab → **Nightly backup** → **Run workflow**.
+
 ## Local testing
 The page uses ES modules, so open it through a local server instead of double-clicking it:
 ```
