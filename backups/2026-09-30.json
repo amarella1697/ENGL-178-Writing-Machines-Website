@@ -1,0 +1,129 @@
+{
+  "subtitle": "",
+  "by": "",
+  "intro": "",
+  "exportedAt": "2026-09-30T14:38:33.385Z",
+  "nextId": 13,
+  "entries": [
+    {
+      "annotation": "Is AI the new \"free subject\" who can \"penetrate the density of things?\" This idea AI systems that are crunching, disgesting the world and spitting out insight, knowledge, advice, spreadsheets, powerpoints, images, art, more data. (Pardon my gastronomic metaphors). We are back to this fantasy that the world is waiting there for us to penetrate or chew through.",
+      "category": "Baffling Complexity",
+      "entrant": "Dr. Edoro",
+      "fragment": "How can a free subject penetrate the density of things and give it meaning?",
+      "id": 1,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "\"What is an Author\" by Michel Foucault (1969)",
+      "sourceUrl": "",
+      "xrefId": null
+    },
+    {
+      "annotation": "Why does artificial intelligence need so many superlatives? More intelligence is a tautulogy.",
+      "category": "Country of Geniuses",
+      "entrant": "Dr. Edoro",
+      "fragment": "“superior intelligence”\n“better-than-human intelligence”\n“country of geniuses in a datacenter” \n“superintelligent”\n“Powerful AI”\n“Expert-Level Science and Engineering\" \n\"superhumanly effective AI\"",
+      "id": 2,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "\"Machines of Loving Grace\" by Dario Amodei (2024)",
+      "sourceUrl": "https://darioamodei.com/essay/machines-of-loving-grace",
+      "xrefId": null
+    },
+    {
+      "annotation": "Knowledge is geometry. What if the entire world is tranformed into a massive vector space where all the \"relevant coordinates are known?\" Does that make life, the world, existence completely predicateble?",
+      "category": "Geometry",
+      "entrant": "Dr. Edoro",
+      "fragment": "The construction of machines…constitutes the most spectacular accomplishment of the physicist. In these machines, the physicist creates a situation in which all the relevant coordinates are known so that the behavior of the machine can be predicted. Radars and nuclear reactors are examples of such machines.",
+      "id": 3,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "\"The Unreasonable Effectiveness of Mathematics in the Natural Sciences\" by Eugene Wigner (1959)",
+      "sourceUrl": "https://webhomes.maths.ed.ac.uk/~v1ranick/papers/wigner.pdf",
+      "xrefId": null
+    },
+    {
+      "annotation": "I don't know what to make of this idea of algorithmic benefactors. Capitalists are not kind today. What makes us think that AI capitalist would be kind. If the algorithm is that intelligent, why did it not not crush capitalism? All that intelligence and we are still in a capitalistic world? Which is doubly odd because labor is supposed to have been abolished. No?",
+      "category": "Country of Geniuses",
+      "entrant": "Dr. Edoro",
+      "fragment": "At that point our current economic setup will no longer make sense…some new and stranger thing will be needed…It could be a capitalist economy of AI systems, which then give out resources (huge amounts of them, since the overall economic pie will be gigantic) to humans based on some secondary economy of what the AI systems think makes sense to reward in humans (based on some judgment ultimately derived from human values). Perhaps the economy runs on Whuffie points.",
+      "id": 4,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "Machines of Loving Grace by Dario Amodei (2024)",
+      "sourceUrl": "https://darioamodei.com/essay/machines-of-loving-grace",
+      "xrefId": null
+    },
+    {
+      "annotation": "Something about this way of describing the mathematical space of LLMs is poetic. I find myself being taken by it. Claude as a galactic being. LOL. Any time I type in a prompt, Claude harnesses a kind of spatializing energy from billions of token-stars to give me an answer. [Eye roll]. I really do have to watch out for how these spatial metaphors gets me.",
+      "category": "Geometry",
+      "entrant": "Dr. Edoro",
+      "fragment": "The technical term is an embedding space if you want to look it up later, but I think of it as a galaxy or a shape. In here, every star is a word. And words that mean similar things are placed in similar positions, and words that share a relationship share a distance and direction. That is, relationships get turned into geometry.",
+      "id": 5,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "Nature Speaks. Can AI Help Us Listen? by Aza Raskin (2025)",
+      "sourceUrl": "https://www.youtube.com/watch?v=QrJUmonmPw0",
+      "xrefId": 3
+    },
+    {
+      "annotation": "Ong is refering to roughly the 15th/16 century. This sort of geometricizing of thought is visual. I would say the difference is not quite computational yet. Kramer's notational iconicity is still in visual but we can see how space enables computation. With LLM, I am thinking the visuality of spatialization disappears.",
+      "category": "Geometry",
+      "entrant": "Dr. Edoro",
+      "fragment": "These more primitive manifestations of the quantitative drive in logic...geometrically charted, intriguingly rather than informatively or usefully, the relation between propositions in terms of their extension.",
+      "id": 6,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "Ramus, Method, and the Decay of Dialogue by Walter J. Ong (1958)",
+      "sourceUrl": "",
+      "xrefId": 5
+    },
+    {
+      "annotation": "When my 5 year-old does subtraction, he is takes an existing set of marks that imply a specific relationship and transforms it into something different. It is not only about visuality. It is not just that abstract relations (the value of number placement) is visible on the page, but that he can then apply rules to that relationship and arrive at a new number.",
+      "category": "Imagining Language",
+      "entrant": "Dr. Edoro",
+      "fragment": "Computation is a creative process based on the manipulation of icons, that is, diagrams.",
+      "id": 7,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "\"From Turing to Peirce: A Semiotic Interpretation of Computation\" by L. M. Possati (2022)",
+      "sourceUrl": "",
+      "xrefId": 6
+    },
+    {
+      "annotation": "In literature, we tend to think of everying as writing as a way to say that everything can be interpreted. But Ciner is suggesting a different reason for seeing things as writing: their spatialization as opposed to their being interpretable.",
+      "category": "Imagining Language",
+      "entrant": "Dr. Edoro",
+      "fragment": "I had never thought of math as writing. The calculus I do everyday is a form of writing.",
+      "id": 8,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "Lab Notes by Cengiz Ciner 9/23",
+      "sourceUrl": "",
+      "xrefId": null
+    },
+    {
+      "annotation": "The way Anushka lists the intersection between her indentiy and places that she inhabits makes me think of coordinates and graphs. If we can identify, arrange, assign value to things, apply rules to them in a way that reveals certain kinds of relationships, does that mean that anything is computable?",
+      "category": "Geometry",
+      "entrant": "Dr. Edoro",
+      "fragment": "My identity changes according to the place I am in. For example, I’m a student here but at my lab I am a researcher  and at my job I’m a coach and at home a kid. Very similar to how 12 and 21 are not the same thing because of the spatial place in the 2d space.",
+      "id": 9,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "Lab Notes by Anushka Gupta 9/23",
+      "sourceUrl": "",
+      "xrefId": null
+    },
+    {
+      "annotation": "How much of what we know about things like writing, computation, LLMs help us understand human thinking? I do know that I have learned a lot from watching my two children learn to read and learn mathematics. There is something fascinating about humans learning to master extremely unnatural processes like learning to read a book or do algebra.",
+      "category": "Baffling Complexity",
+      "entrant": "Dr. Edoro",
+      "fragment": "I wonder if young children also learn this specific way. Children have to look at letters and memorize the letters, children follow rules and know numbers have value in place.",
+      "id": 10,
+      "imageUrl": "",
+      "isQuote": true,
+      "source": "Lab Notes by Colleen Yang 9/23",
+      "sourceUrl": "",
+      "xrefId": null
+    }
+  ]
+}
