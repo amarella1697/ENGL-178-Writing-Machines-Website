@@ -116,10 +116,12 @@
   .search-wrap {
     flex: 1;
     min-width: 220px;
-    max-width: 400px;
+    max-width: 620px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
-  .search-wrap input {
-    width: 100%;
+  .search-wrap input, .search-wrap select {
     padding: 9px 12px;
     font-family: 'Courier New', monospace;
     font-size: 13px;
@@ -128,7 +130,10 @@
     background: var(--paper-raised);
     color: var(--ink);
   }
-  .search-wrap input:focus { outline: none; border-color: var(--stamp); }
+  .search-wrap input { flex: 2 1 220px; }
+  .search-wrap select { flex: 1 1 160px; cursor: pointer; }
+  .search-wrap input:focus, .search-wrap select:focus { outline: none; border-color: var(--stamp); }
+  .search-wrap input:disabled, .search-wrap select:disabled { opacity: 0.45; cursor: not-allowed; }
 
   button {
     font-family: 'Courier New', Courier, monospace;
@@ -203,15 +208,21 @@
     align-items: center;
   }
 
-  /* ── MASONRY GRID ── */
+  /* ── MASONRY GRID ──
+     Cards keep their natural height: each one spans as many 4px rows as it needs
+     (set by sizeCard() in the script), so short and long entries pack together
+     while still reading left to right in archive order. */
   .entries-grid {
     max-width: 1200px;
     margin: 16px auto 60px;
     padding: 0 24px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+    grid-auto-rows: 4px;
+    column-gap: 20px;
+    align-items: start;
   }
+  .entries-grid > * { margin-bottom: 20px; }
 
   .empty-state {
     grid-column: 1 / -1;
@@ -222,12 +233,12 @@
   }
   .empty-state .big { font-size: 17px; margin-bottom: 10px; }
 
-  /* ── SQUARE CARD ── */
+  /* ── CARD ── */
   .card {
     background: var(--paper-raised);
     border: 1px solid var(--rule);
     border-radius: 2px;
-    padding: 18px 18px 14px;
+    padding: 22px 22px 16px;
     position: relative;
     box-shadow: 2px 3px 0 rgba(26,26,46,0.05);
     display: flex;
@@ -241,10 +252,10 @@
     background: var(--stamp);
     color: var(--paper);
     font-family: 'Courier New', monospace;
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    padding: 3px 8px;
+    padding: 4px 9px;
     border-radius: 0 2px 0 6px;
     max-width: 55%;
     overflow: hidden;
@@ -254,37 +265,76 @@
 
   .card-meta {
     display: flex;
-    gap: 10px;
+    gap: 6px 12px;
     flex-wrap: wrap;
     font-family: 'Courier New', monospace;
-    font-size: 10px;
+    font-size: 12px;
+    line-height: 1.4;
     color: var(--ink-soft);
-    margin-bottom: 8px;
-    padding-right: 70px;
+    margin-bottom: 12px;
+    padding-right: 80px;
   }
   .card-meta .source-link { color: var(--sage); text-decoration: underline; text-decoration-style: dotted; }
   .card-meta .source-link:hover { color: var(--stamp); }
-  .card-meta .entrant { color: var(--stamp); font-weight: bold; }
+  .card-meta .entrant {
+    color: var(--stamp); font-weight: bold; cursor: pointer;
+    background: none; border: none; padding: 0; font: inherit; font-weight: bold;
+    letter-spacing: 0; text-transform: none;
+  }
+  .card-meta .entrant:hover { background: none; color: var(--stamp); text-decoration: underline; }
 
   .card-fragment {
-    font-size: 14px;
-    line-height: 1.5;
-    margin: 0 0 8px;
+    font-size: 17px;
+    line-height: 1.55;
+    margin: 0 0 12px;
     color: var(--ink);
+    white-space: pre-line;
   }
   .card-fragment.is-quote {
-    padding-left: 12px;
+    padding-left: 14px;
     border-left: 2px solid var(--rule);
     font-style: italic;
   }
 
   .card-annotation {
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.55;
     color: var(--ink-soft);
-    margin: 0 0 8px;
+    margin: 0 0 12px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: pre-line;
   }
+
+  /* Images are shown whole (never cropped); click one to see it full size. */
+  .card-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 12px;
+    border: 1px solid var(--rule-light);
+    cursor: zoom-in;
+    background: var(--paper);
+  }
+  .card-video { margin: 0 0 12px; }
+  .card-video iframe, .card-video video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--rule-light);
+    background: var(--ink);
+  }
+  .card-video video { aspect-ratio: auto; }
+  .card-video audio { display: block; width: 100%; }
+  .card-video .video-link { font-size: 14px; color: var(--sage); }
+  .media-broken {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border: 1px dashed var(--rule);
+    padding: 10px;
+    margin: 0 0 12px;
+  }
+  .media-broken a { color: var(--sage); word-break: break-all; }
 
   .card-footer {
     display: flex;
@@ -299,7 +349,7 @@
 
   .tag-pill {
     font-family: 'Courier New', monospace;
-    font-size: 9.5px;
+    font-size: 10.5px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     background: transparent;
@@ -312,14 +362,79 @@
   .tag-pill:hover { background: var(--sage); color: var(--paper); }
 
   .card-xref {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--sage);
     font-style: italic;
   }
   .card-xref a { color: var(--sage); cursor: pointer; text-decoration: underline; }
 
   .card-actions { display: flex; gap: 4px; }
-  .card-actions button { font-size: 9px; padding: 4px 8px; }
+  .card-actions button { font-size: 10px; padding: 5px 9px; }
+
+  /* ── ARRANGE MODE (teacher) ── */
+  .arrange-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 1200px;
+    margin: 16px auto 0;
+    padding: 12px 24px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .arrange-bar.hidden { display: none; }
+  .arrange-bar button { background: transparent; color: var(--paper); border-color: var(--paper); }
+  .arrange-bar button:hover { background: var(--paper); color: var(--ink); }
+  .arrange-bar button.primary { background: var(--stamp); border-color: var(--stamp); }
+  .arrange-bar button.primary:hover { background: #9c356a; border-color: #9c356a; color: var(--paper); }
+
+  .arranging .card { cursor: grab; }
+  .arranging .card.dragging { opacity: 0.35; }
+  .arranging .card.drop-before { box-shadow: -5px 0 0 var(--stamp); }
+  .arranging .card.drop-after { box-shadow: 5px 0 0 var(--stamp); }
+  .arranging .card iframe, .arranging .card video { pointer-events: none; }
+  .move-controls { display: flex; gap: 4px; align-items: center; }
+  .move-controls button { font-size: 10px; padding: 5px 9px; }
+  .move-controls .pos { font-family: 'Courier New', monospace; font-size: 11px; color: var(--ink-soft); margin-right: 4px; }
+
+  .teacher-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  .teacher-link:hover { background: none; color: var(--stamp); }
+
+  /* ── LIGHTBOX ── */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,46,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 60;
+    cursor: zoom-out;
+  }
+  .lightbox.hidden { display: none; }
+  .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; background: var(--paper-raised); }
+
+  .media-preview { margin-top: 8px; }
+  .media-preview img { max-width: 100%; max-height: 180px; border: 1px solid var(--rule-light); }
+  .media-preview .bad { font-family: 'Courier New', monospace; font-size: 11px; color: var(--stamp); }
 
   /* ── MODAL FORM ── */
   .overlay {
@@ -430,12 +545,22 @@
 
 <div class="toolbar">
   <div class="search-wrap">
-    <input type="text" id="searchInput" placeholder="search fragments, sources, annotations, entrants…" aria-label="Search entries">
+    <input type="search" id="searchInput" placeholder="search by student name, fragment, source…" aria-label="Search entries">
+    <select id="entrantFilter" aria-label="Show entries by one contributor"></select>
   </div>
   <div class="toolbar-group">
     <button class="primary" id="btnNewEntry">+ New Entry</button>
+    <button id="btnArrange" hidden>Arrange Entries</button>
     <button id="btnExport">Export Archive (.json)</button>
   </div>
+</div>
+
+<div class="arrange-bar hidden" id="arrangeBar">
+  <span>Arranging — drag cards, or use Earlier / Later. Students see this order once you save.</span>
+  <span class="toolbar-group">
+    <button id="btnArrangeCancel">Cancel</button>
+    <button class="primary" id="btnArrangeSave">Save Order</button>
+  </span>
 </div>
 
 <div class="constellations-bar">
@@ -449,7 +574,14 @@
 
 <div class="entries-grid" id="entriesList"></div>
 
-<footer id="footerHint"></footer>
+<footer>
+  <div id="footerHint"></div>
+  <button class="teacher-link" id="btnTeacher">Teacher sign-in</button>
+</footer>
+
+<div class="lightbox hidden" id="lightbox" role="dialog" aria-label="Full-size image">
+  <img id="lightboxImg" alt="">
+</div>
 
 <!-- Entry form modal -->
 <div class="overlay hidden" id="overlay">
@@ -475,6 +607,14 @@
     <div class="field">
       <label for="fImageUrl">Image URL <span class="hint" style="display:inline">(optional)</span></label>
       <input type="url" id="fImageUrl" placeholder="https://…">
+      <span class="hint">A link to an image file, or a Google Drive link shared as "Anyone with the link".</span>
+      <div class="media-preview" id="imagePreview"></div>
+    </div>
+
+    <div class="field">
+      <label for="fVideoUrl">Video or audio URL <span class="hint" style="display:inline">(optional)</span></label>
+      <input type="url" id="fVideoUrl" placeholder="https://…">
+      <span class="hint">YouTube, a Google Drive link shared as "Anyone with the link", or a direct link to an .mp4 or .mp3 file.</span>
     </div>
 
     <div class="field">
@@ -517,8 +657,8 @@
 <!-- Passcode modal -->
 <div class="overlay hidden" id="passOverlay">
   <div class="form-card pass-card">
-    <h2>Passcode</h2>
-    <div class="form-sub">Enter the class passcode to add or change entries</div>
+    <h2 id="passTitle">Passcode</h2>
+    <div class="form-sub" id="passSub">Enter the class passcode to add or change entries</div>
     <div class="field">
       <label for="fPasscode" class="sr-only">Passcode</label>
       <input type="password" id="fPasscode" autocomplete="off">
@@ -552,26 +692,41 @@ import firebaseConfig from './firebase-config.js';
   let nextId = 1;
   let meta = {};
   let activeTag = null;
+  let activeEntrant = null;   // lower-cased contributor name, or null for everyone
   let unlocked = false;
+  let isTeacher = false;
+  let arranging = false;
+  let draftOrder = [];        // entry ids in the order being arranged, before it is saved
 
   let editingId = null;
 
   const el = id => document.getElementById(id);
+  const num = id => String(id).padStart(3, '0');
+  const nameKey = name => (name || '').trim().toLowerCase();
 
   // ── PASSCODE ──
   // Writes are allowed only from browsers that have entered the class passcode
-  // (see firestore.rules). It is asked again after every page load.
+  // (see firestore.rules). It is asked again after every page load. The teacher
+  // passcode works the same way, and also allows changing the order of entries.
   let resolvePass = null;
+  let passKind = 'class';
 
-  function ensureUnlocked() {
-    if (unlocked) return Promise.resolve(true);
+  function askPass(kind) {
     if (!auth.currentUser) { alert('Still connecting to the archive — try again in a moment.'); return Promise.resolve(false); }
+    passKind = kind;
+    el('passTitle').textContent = kind === 'teacher' ? 'Teacher Passcode' : 'Passcode';
+    el('passSub').textContent = kind === 'teacher'
+      ? 'Enter the teacher passcode to arrange entries'
+      : 'Enter the class passcode to add or change entries';
     el('fPasscode').value = '';
     el('passError').textContent = '';
     el('passOverlay').classList.remove('hidden');
     el('fPasscode').focus();
     return new Promise(resolve => { resolvePass = resolve; });
   }
+
+  function ensureUnlocked() { return (unlocked || isTeacher) ? Promise.resolve(true) : askPass('class'); }
+  function ensureTeacher() { return isTeacher ? Promise.resolve(true) : askPass('teacher'); }
 
   function closePass(result) {
     el('passOverlay').classList.add('hidden');
@@ -583,7 +738,8 @@ import firebaseConfig from './firebase-config.js';
     if (!code) return;
     el('btnPassEnter').disabled = true;
     try {
-      await setDoc(doc(db, 'unlocked', auth.currentUser.uid), { code });
+      await setDoc(doc(db, passKind === 'teacher' ? 'teachers' : 'unlocked', auth.currentUser.uid), { code });
+      if (passKind === 'teacher') { isTeacher = true; renderTeacherControls(); }
       unlocked = true;
       closePass(true);
     } catch (err) {
@@ -591,6 +747,11 @@ import firebaseConfig from './firebase-config.js';
     } finally {
       el('btnPassEnter').disabled = false;
     }
+  }
+
+  function renderTeacherControls() {
+    el('btnArrange').hidden = !isTeacher || arranging;
+    el('btnTeacher').textContent = isTeacher ? 'Signed in as teacher' : 'Teacher sign-in';
   }
 
   // ── TAG / CONSTELLATION LIST ──
@@ -618,10 +779,28 @@ import firebaseConfig from './firebase-config.js';
       pill.onclick = () => { activeTag = (activeTag === cat ? null : cat); render(); };
       container.appendChild(pill);
     });
+    container.querySelectorAll('button').forEach(b => { b.disabled = arranging; });
 
     // datalist
     const dl = el('categoryOptions');
     dl.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  // ── CONTRIBUTOR FILTER ──
+  function renderEntrantFilter() {
+    const people = new Map();   // name key -> { name, count }
+    entries.forEach(e => {
+      const key = nameKey(e.entrant);
+      if (!key) return;
+      if (!people.has(key)) people.set(key, { name: e.entrant.trim(), count: 0 });
+      people.get(key).count++;
+    });
+    if (activeEntrant && !people.has(activeEntrant)) activeEntrant = null;
+    const sorted = [...people.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name));
+    const sel = el('entrantFilter');
+    sel.innerHTML = `<option value="">All contributors (${people.size})</option>` +
+      sorted.map(([key, p]) => `<option value="${escapeHtml(key)}">${escapeHtml(p.name)} (${p.count})</option>`).join('');
+    sel.value = activeEntrant || '';
   }
 
   function escapeHtml(str) {
@@ -631,77 +810,266 @@ import firebaseConfig from './firebase-config.js';
   }
 
   function getFiltered() {
-    const q = el('searchInput').value.trim().toLowerCase();
+    if (arranging) return entries.slice();
+    const words = el('searchInput').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return entries.filter(e => {
       if (activeTag !== null && (e.category || 'Uncategorized') !== activeTag) return false;
-      if (!q) return true;
+      if (activeEntrant && nameKey(e.entrant) !== activeEntrant) return false;
       const hay = [e.fragment, e.annotation, e.source, e.category, e.entrant].join(' ').toLowerCase();
-      return hay.includes(q);
+      return words.every(w => hay.includes(w));
     });
   }
 
   function findEntry(id) { return entries.find(e => e.id === id); }
 
+  // Entries follow the teacher's saved order. Entries added since it was saved
+  // aren't in it yet, so they come first, newest first.
+  function inOrder(list) {
+    const order = arranging ? draftOrder : (meta.order || []);
+    const pos = new Map(order.map((id, i) => [id, i]));
+    return list.slice().sort((a, b) => {
+      const pa = pos.has(a.id), pb = pos.has(b.id);
+      if (pa && pb) return pos.get(a.id) - pos.get(b.id);
+      if (pa !== pb) return pa ? 1 : -1;
+      return b.id - a.id;
+    });
+  }
+
+  // ── IMAGES & VIDEO ──
+  function safeUrl(u) {
+    try { const url = new URL(String(u || '').trim()); return /^https?:$/.test(url.protocol) ? url.href : ''; }
+    catch (err) { return ''; }
+  }
+
+  function driveId(u) {
+    const m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:[^#]*&)?id=)([\w-]+)/);
+    return m ? m[1] : null;
+  }
+
+  // Google Drive share links point at a viewer page, not the image itself.
+  function imageSrc(u) {
+    u = safeUrl(u);
+    const id = u && driveId(u);
+    return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w2000` : u;
+  }
+
+  function videoHtml(u) {
+    u = safeUrl(u);
+    if (!u) return '';
+    const frame = src => `<iframe src="${src}" loading="lazy" title="Video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    let m;
+    if ((m = u.match(/(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/))) return frame(`https://www.youtube-nocookie.com/embed/${m[1]}`);
+    if ((m = driveId(u))) return frame(`https://drive.google.com/file/d/${m}/preview`);
+    if (/\.mp4([?#]|$)/i.test(u)) return `<video controls preload="metadata" src="${escapeHtml(u)}"></video>`;
+    if (/\.mp3([?#]|$)/i.test(u)) return `<audio controls preload="metadata" src="${escapeHtml(u)}"></audio>`;
+    return `<a class="video-link" href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer">Watch the video ↗</a>`;
+  }
+
+  function renderImagePreview() {
+    const src = imageSrc(el('fImageUrl').value);
+    const box = el('imagePreview');
+    box.innerHTML = src ? `<img src="${escapeHtml(src)}" alt="Preview">` : '';
+    const img = box.querySelector('img');
+    if (img) img.onerror = () => { box.innerHTML = '<span class="bad">This link does not load as an image. Check that it is public and points to the image itself.</span>'; };
+  }
+
+  // ── MASONRY ──
+  // Each card spans as many 4px grid rows as its height needs (see .entries-grid).
+  const ROW = 4, GAP = 20;
+  function sizeCard(card) {
+    card.style.gridRowEnd = 'span ' + Math.ceil((card.getBoundingClientRect().height + GAP) / ROW);
+  }
+  const masonry = new ResizeObserver(items => items.forEach(item => sizeCard(item.target)));
+
   // ── RENDER ENTRIES ──
   function renderEntries() {
     const list = el('entriesList');
-    const filtered = getFiltered().sort((a,b) => b.id - a.id);
+    const filtered = inOrder(getFiltered());
+    masonry.disconnect();
+    list.classList.toggle('arranging', arranging);
 
     if (entries.length === 0) {
       list.innerHTML = `<div class="empty-state"><p class="big">The archive is empty.</p><p>Click <strong>+ New Entry</strong> to add the first fragment.</p></div>`;
-      return;
-    }
-    if (filtered.length === 0) {
-      list.innerHTML = `<div class="empty-state"><p class="big">No entries match.</p><p>Try a different search term or clear the constellation filter.</p></div>`;
-      return;
-    }
-
-    list.innerHTML = filtered.map(e => {
-      const xref = e.xrefId ? findEntry(e.xrefId) : null;
-      return `
-        <article class="card">
-          <div class="stamp-corner">${escapeHtml(e.category || 'Uncategorized')}</div>
-          <div class="card-meta">
-            <span>NO. ${String(e.id).padStart(3,'0')}</span>
-            ${e.entrant ? `<span class="entrant">${escapeHtml(e.entrant)}</span>` : ''}
-            ${e.source ? `<span>${e.sourceUrl ? `<a href="${escapeHtml(e.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(e.source)}</a>` : escapeHtml(e.source)}</span>` : ''}
-          </div>
-          <p class="card-fragment${e.isQuote ? ' is-quote' : ''}">${escapeHtml(e.fragment)}</p>
-          ${e.annotation ? `<p class="card-annotation">${escapeHtml(e.annotation)}</p>` : ''}
-          <div class="card-footer">
-            <span class="tag-pill" data-cat="${escapeHtml(e.category || 'Uncategorized')}">${escapeHtml(e.category || 'Uncategorized')}</span>
-            ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${String(xref.id).padStart(3,'0')}</a></div>` : ''}
-            <div class="card-actions">
-              <button data-edit="${e.id}">Edit</button>
-              <button data-delete="${e.id}">Delete</button>
+    } else if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><p class="big">No entries match.</p><p>Try a different search term or clear the constellation and contributor filters.</p></div>`;
+    } else {
+      list.innerHTML = filtered.map((e, i) => {
+        const xref = e.xrefId ? findEntry(e.xrefId) : null;
+        const img = imageSrc(e.imageUrl);
+        const video = videoHtml(e.videoUrl);
+        const sourceUrl = safeUrl(e.sourceUrl);
+        const actions = arranging
+          ? `<div class="move-controls">
+               <span class="pos">#${i + 1}</span>
+               <button data-move="first" ${i === 0 ? 'disabled' : ''} title="Move to the start">⇤ First</button>
+               <button data-move="-1" ${i === 0 ? 'disabled' : ''}>◀ Earlier</button>
+               <button data-move="1" ${i === filtered.length - 1 ? 'disabled' : ''}>Later ▶</button>
+             </div>`
+          : `<div class="card-actions">
+               <button data-edit="${e.id}">Edit</button>
+               <button data-delete="${e.id}">Delete</button>
+             </div>`;
+        return `
+          <article class="card" data-id="${e.id}" ${arranging ? 'draggable="true"' : ''}>
+            <div class="stamp-corner">${escapeHtml(e.category || 'Uncategorized')}</div>
+            <div class="card-meta">
+              <span>NO. ${num(e.id)}</span>
+              ${e.entrant ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(e.entrant))}" title="Show all entries by ${escapeHtml(e.entrant)}">${escapeHtml(e.entrant)}</button>` : ''}
+              ${e.source ? `<span>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(e.source)}</a>` : escapeHtml(e.source)}</span>` : ''}
             </div>
-          </div>
-        </article>`;
-    }).join('');
-
-    list.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', async () => { if (await ensureUnlocked()) openForm(parseInt(btn.dataset.edit, 10)); }));
-    list.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteEntry(parseInt(btn.dataset.delete, 10))));
-    list.querySelectorAll('[data-goto]').forEach(a => {
-      a.addEventListener('click', () => {
-        activeTag = null; el('searchInput').value = ''; render();
-        const t = document.querySelector(`[data-edit="${a.dataset.goto}"]`);
-        if (t) t.closest('.card').scrollIntoView({behavior:'smooth', block:'center'});
-      });
-    });
-    list.querySelectorAll('.tag-pill').forEach(pill => pill.addEventListener('click', () => { activeTag = pill.dataset.cat; render(); }));
+            <p class="card-fragment${e.isQuote ? ' is-quote' : ''}">${escapeHtml(e.fragment)}</p>
+            ${img ? `<img class="card-image" src="${escapeHtml(img)}" data-original="${escapeHtml(safeUrl(e.imageUrl))}" alt="Image for No. ${num(e.id)}" loading="lazy">` : ''}
+            ${video ? `<div class="card-video">${video}</div>` : ''}
+            ${e.annotation ? `<p class="card-annotation">${escapeHtml(e.annotation)}</p>` : ''}
+            <div class="card-footer">
+              <span class="tag-pill" data-cat="${escapeHtml(e.category || 'Uncategorized')}">${escapeHtml(e.category || 'Uncategorized')}</span>
+              ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${num(xref.id)}</a></div>` : ''}
+              ${actions}
+            </div>
+          </article>`;
+      }).join('');
+    }
+    [...list.children].forEach(child => { sizeCard(child); masonry.observe(child); });
   }
 
   function renderCount() {
     const total = entries.length;
     const shown = getFiltered().length;
-    el('countLine').textContent = total === 0 ? '' : `${shown} of ${total} fragments`;
+    el('countLine').textContent = total === 0 ? '' : arranging ? `Arranging ${total} fragments` : `${shown} of ${total} fragments`;
     el('footerHint').textContent = HINT;
   }
 
   function render() {
     renderConstellations();
+    renderEntrantFilter();
     renderEntries();
     renderCount();
+  }
+
+  // ── CARD CLICKS (one listener for every card) ──
+  function onListClick(ev) {
+    const t = ev.target;
+    const card = t.closest('.card');
+    if (t.closest('[data-edit]')) {
+      const id = parseInt(t.closest('[data-edit]').dataset.edit, 10);
+      ensureUnlocked().then(ok => { if (ok) openForm(id); });
+    } else if (t.closest('[data-delete]')) {
+      deleteEntry(parseInt(t.closest('[data-delete]').dataset.delete, 10));
+    } else if (t.closest('[data-move]')) {
+      const how = t.closest('[data-move]').dataset.move;
+      const ids = inOrder(entries).map(e => e.id);
+      const id = Number(card.dataset.id);
+      const from = ids.indexOf(id);
+      moveEntry(id, how === 'first' ? 0 : from + Number(how));
+    } else if (t.closest('[data-goto]')) {
+      const id = t.closest('[data-goto]').dataset.goto;
+      if (!arranging) { activeTag = null; activeEntrant = null; el('searchInput').value = ''; render(); }
+      const target = el('entriesList').querySelector(`.card[data-id="${id}"]`);
+      if (target) target.scrollIntoView({behavior:'smooth', block:'center'});
+    } else if (t.closest('[data-entrant]') && !arranging) {
+      activeEntrant = t.closest('[data-entrant]').dataset.entrant;
+      render();
+    } else if (t.closest('.tag-pill') && !arranging) {
+      activeTag = t.closest('.tag-pill').dataset.cat;
+      render();
+    } else if (t.matches('.card-image') && !arranging) {
+      el('lightboxImg').src = t.src;
+      el('lightbox').classList.remove('hidden');
+    }
+  }
+
+  // A broken image link shows the link instead of an empty box.
+  function onMediaError(ev) {
+    const img = ev.target;
+    if (!img.matches || !img.matches('.card-image')) return;
+    const link = img.dataset.original;
+    const box = document.createElement('div');
+    box.className = 'media-broken';
+    box.innerHTML = `This image could not be loaded: <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link)}</a>`;
+    img.replaceWith(box);
+  }
+
+  // ── ARRANGE (teacher only) ──
+  async function startArrange() {
+    if (!await ensureTeacher()) return;
+    draftOrder = inOrder(entries).map(e => e.id);
+    arranging = true;
+    el('searchInput').disabled = el('entrantFilter').disabled = true;
+    el('arrangeBar').classList.remove('hidden');
+    renderTeacherControls();
+    render();
+  }
+
+  function stopArrange() {
+    arranging = false;
+    el('searchInput').disabled = el('entrantFilter').disabled = false;
+    el('arrangeBar').classList.add('hidden');
+    renderTeacherControls();
+    render();
+  }
+
+  function moveEntry(id, to) {
+    const ids = inOrder(entries).map(e => e.id).filter(x => x !== id);
+    ids.splice(Math.max(0, Math.min(to, ids.length)), 0, id);
+    draftOrder = ids;
+    render();
+    const card = el('entriesList').querySelector(`.card[data-id="${id}"]`);
+    if (card) card.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  async function saveOrder() {
+    el('btnArrangeSave').disabled = true;
+    try {
+      await setDoc(metaRef, { order: inOrder(entries).map(e => e.id) }, { merge: true });
+      stopArrange();
+    } catch (err) {
+      alert('Could not save the order: ' + err.message);
+    } finally {
+      el('btnArrangeSave').disabled = false;
+    }
+  }
+
+  // Drag and drop: drop on the left half of a card to go before it, right half to go after.
+  let dragId = null;
+  function clearDropMarks() {
+    el('entriesList').querySelectorAll('.drop-before, .drop-after').forEach(c => c.classList.remove('drop-before', 'drop-after'));
+  }
+  function dropSide(card, ev) {
+    const r = card.getBoundingClientRect();
+    return ev.clientX < r.left + r.width / 2 ? 'before' : 'after';
+  }
+  function wireDragAndDrop(list) {
+    list.addEventListener('dragstart', ev => {
+      const card = ev.target.closest && ev.target.closest('.card');
+      if (!arranging || !card) return;
+      dragId = Number(card.dataset.id);
+      card.classList.add('dragging');
+      ev.dataTransfer.effectAllowed = 'move';
+      ev.dataTransfer.setData('text/plain', String(dragId));
+    });
+    list.addEventListener('dragover', ev => {
+      const card = ev.target.closest('.card');
+      if (dragId === null || !card || Number(card.dataset.id) === dragId) return;
+      ev.preventDefault();
+      clearDropMarks();
+      card.classList.add('drop-' + dropSide(card, ev));
+    });
+    list.addEventListener('drop', ev => {
+      const card = ev.target.closest('.card');
+      if (dragId === null || !card) return;
+      ev.preventDefault();
+      const targetId = Number(card.dataset.id);
+      if (targetId !== dragId) {
+        const ids = inOrder(entries).map(e => e.id).filter(x => x !== dragId);
+        const at = ids.indexOf(targetId) + (dropSide(card, ev) === 'after' ? 1 : 0);
+        moveEntry(dragId, at);
+      }
+    });
+    list.addEventListener('dragend', () => {
+      dragId = null;
+      clearDropMarks();
+      list.querySelectorAll('.dragging').forEach(c => c.classList.remove('dragging'));
+    });
   }
 
   // ── FORM ──
@@ -710,22 +1078,24 @@ import firebaseConfig from './firebase-config.js';
     const entry = id ? findEntry(id) : null;
 
     el('formTitle').textContent = entry ? 'Edit Entry' : 'New Entry';
-    el('formCardNum').textContent = entry ? String(entry.id).padStart(3,'0') : String(nextId).padStart(3,'0');
+    el('formCardNum').textContent = entry ? num(entry.id) : num(nextId);
     el('fEntrant').value = entry ? (entry.entrant || '') : '';
     el('fFragment').value = entry ? entry.fragment : '';
     el('fIsQuote').checked = entry ? !!entry.isQuote : false;
     el('fImageUrl').value = entry ? (entry.imageUrl || '') : '';
+    el('fVideoUrl').value = entry ? (entry.videoUrl || '') : '';
     el('fAnnotation').value = entry ? (entry.annotation || '') : '';
     el('fSource').value = entry ? (entry.source || '') : '';
     el('fSourceUrl').value = entry ? (entry.sourceUrl || '') : '';
     el('fCategory').value = entry ? (entry.category || '') : '';
     el('formError').textContent = '';
+    renderImagePreview();
 
     const xrefSelect = el('fXref');
     xrefSelect.innerHTML = '<option value="">— none —</option>' + entries
       .filter(e => !entry || e.id !== entry.id)
       .sort((a,b) => a.id - b.id)
-      .map(e => `<option value="${e.id}">No. ${String(e.id).padStart(3,'0')} — ${escapeHtml(e.fragment.slice(0,50))}${e.fragment.length>50?'…':''}</option>`)
+      .map(e => `<option value="${e.id}">No. ${num(e.id)} — ${escapeHtml(e.fragment.slice(0,50))}${e.fragment.length>50?'…':''}</option>`)
       .join('');
     xrefSelect.value = entry && entry.xrefId ? String(entry.xrefId) : '';
 
@@ -743,6 +1113,7 @@ import firebaseConfig from './firebase-config.js';
       fragment,
       isQuote: el('fIsQuote').checked,
       imageUrl: el('fImageUrl').value.trim(),
+      videoUrl: el('fVideoUrl').value.trim(),
       annotation: el('fAnnotation').value.trim(),
       source: el('fSource').value.trim(),
       sourceUrl: el('fSourceUrl').value.trim(),
@@ -790,6 +1161,7 @@ import firebaseConfig from './firebase-config.js';
       intro: el('introField').value.trim(),
       exportedAt: new Date().toISOString(),
       nextId,
+      order: meta.order || [],
       entries
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
@@ -816,6 +1188,7 @@ import firebaseConfig from './firebase-config.js';
     Object.entries(HEADER_FIELDS).forEach(([id, key]) => {
       if (document.activeElement !== el(id)) el(id).value = meta[key] || '';
     });
+    render();
   });
 
   Object.entries(HEADER_FIELDS).forEach(([id, key]) => {
@@ -831,21 +1204,35 @@ import firebaseConfig from './firebase-config.js';
   });
 
   // ── WIRE UP ──
+  const list = el('entriesList');
+  list.addEventListener('click', onListClick);
+  list.addEventListener('error', onMediaError, true);
+  wireDragAndDrop(list);
+
   el('btnNewEntry').addEventListener('click', async () => { if (await ensureUnlocked()) openForm(null); });
   el('btnCancel').addEventListener('click', closeForm);
   el('btnSave').addEventListener('click', saveEntry);
   el('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeForm(); });
+  el('lightbox').addEventListener('click', () => el('lightbox').classList.add('hidden'));
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if (!el('passOverlay').classList.contains('hidden')) closePass(false);
+    if (!el('lightbox').classList.contains('hidden')) el('lightbox').classList.add('hidden');
+    else if (!el('passOverlay').classList.contains('hidden')) closePass(false);
     else if (!el('overlay').classList.contains('hidden')) closeForm();
   });
   el('btnPassEnter').addEventListener('click', submitPass);
   el('btnPassCancel').addEventListener('click', () => closePass(false));
   el('passOverlay').addEventListener('click', e => { if (e.target.id === 'passOverlay') closePass(false); });
   el('fPasscode').addEventListener('keydown', e => { if (e.key === 'Enter') submitPass(); });
+  el('fImageUrl').addEventListener('input', renderImagePreview);
   el('searchInput').addEventListener('input', render);
+  el('entrantFilter').addEventListener('change', () => { activeEntrant = el('entrantFilter').value || null; render(); });
   el('btnExport').addEventListener('click', exportArchive);
+  el('btnTeacher').addEventListener('click', ensureTeacher);
+  el('btnArrange').addEventListener('click', startArrange);
+  el('btnArrangeSave').addEventListener('click', saveOrder);
+  el('btnArrangeCancel').addEventListener('click', stopArrange);
+  window.addEventListener('beforeunload', e => { if (arranging) e.preventDefault(); });
 
   render();
 })();

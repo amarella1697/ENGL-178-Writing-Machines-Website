@@ -2,10 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // A browser is "unlocked" once it has proven it knows the class passcode.
+    // A browser is a "teacher" once it has proven it knows the teacher passcode.
+    function teacher() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/teachers/$(request.auth.uid));
+    }
+
+    // A browser is "unlocked" once it has proven it knows the class passcode
+    // (the teacher passcode unlocks it too).
     function unlocked() {
       return request.auth != null
-        && exists(/databases/$(database)/documents/unlocked/$(request.auth.uid));
+        && (exists(/databases/$(database)/documents/unlocked/$(request.auth.uid)) || teacher());
     }
 
     // Anyone can read the archive; only unlocked browsers can change it.
@@ -13,9 +20,14 @@ service cloud.firestore {
       allow read: if true;
       allow write: if unlocked();
     }
+
+    // The order of entries (the "order" field of meta/archive) can only be changed by the teacher.
     match /meta/{doc} {
       allow read: if true;
-      allow write: if unlocked();
+      allow create: if teacher() || (unlocked() && !('order' in request.resource.data));
+      allow update: if teacher()
+        || (unlocked() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['order']));
+      allow delete: if teacher();
     }
 
     // A browser unlocks itself by writing the passcode here. The write only succeeds
@@ -30,6 +42,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/passcodes/$(request.resource.data.code));
     }
 
-    // /passcodes has no rules, so browsers can never read or list it.
+    // Same, for the teacher passcode, checked against /teacherPasscodes.
+    match /teachers/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code'])
+        && request.resource.data.code is string
+        && request.resource.data.code.size() < 100
+        && exists(/databases/$(database)/documents/teacherPasscodes/$(request.resource.data.code));
+    }
+
+    // /passcodes and /teacherPasscodes have no rules, so browsers can never read or list them.
   }
 }

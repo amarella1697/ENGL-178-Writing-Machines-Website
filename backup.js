@@ -10,16 +10,19 @@ const key = `key=${firebaseConfig.apiKey}`;
 
 // Firestore REST returns typed values, e.g. { stringValue: 'x' } or { integerValue: '3' },
 // in no fixed order; keys are sorted so backups only differ when the data does.
+function value(name, v) {
+  if ('stringValue' in v) return v.stringValue;
+  if ('integerValue' in v) return Number(v.integerValue);
+  if ('doubleValue' in v) return v.doubleValue;
+  if ('booleanValue' in v) return v.booleanValue;
+  if ('nullValue' in v) return null;
+  if ('arrayValue' in v) return (v.arrayValue.values || []).map(item => value(name, item));
+  throw new Error(`Unexpected field type for "${name}": ${JSON.stringify(v)}`);
+}
+
 function plain(fields = {}) {
   const out = {};
-  for (const [name, v] of Object.entries(fields).sort(([a], [b]) => a.localeCompare(b))) {
-    if ('stringValue' in v) out[name] = v.stringValue;
-    else if ('integerValue' in v) out[name] = Number(v.integerValue);
-    else if ('doubleValue' in v) out[name] = v.doubleValue;
-    else if ('booleanValue' in v) out[name] = v.booleanValue;
-    else if ('nullValue' in v) out[name] = null;
-    else throw new Error(`Unexpected field type for "${name}": ${JSON.stringify(v)}`);
-  }
+  for (const [name, v] of Object.entries(fields).sort(([a], [b]) => a.localeCompare(b))) out[name] = value(name, v);
   return out;
 }
 
@@ -47,6 +50,7 @@ const payload = {
   intro: meta.intro || '',
   exportedAt: now.toISOString(),
   nextId: meta.nextId,
+  order: meta.order || [],
   entries
 };
 

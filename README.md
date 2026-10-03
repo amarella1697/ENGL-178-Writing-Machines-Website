@@ -6,9 +6,13 @@ no exporting or importing JSON.
 **Live site:** <https://amarella1697.github.io/ENGL-178-Writing-Machines-Website/>
 
 ## For students
-- Open the link to read the archive. Search and the constellation filters work for everyone.
+- Open the link to read the archive. Search, the contributor menu, and the constellation filters
+  work for everyone. Click a name on any card to see everything that person entered.
 - **+ New Entry**, **Edit**, and **Delete** ask for the class passcode (get it from your
   instructor). It is asked again whenever the page is refreshed.
+- Entries can include an **image** and a **video**. Paste a link to an image file or a Google
+  Drive image, and a YouTube, Google Drive, or direct .mp4 / .mp3 link for video or audio. Drive files must
+  be shared as *Anyone with the link*. Images show whole; click one to see it full size.
 - Your changes are saved immediately and show up for everyone else without a refresh.
 - **Export Archive (.json)** downloads a copy of the whole archive.
 
@@ -25,6 +29,7 @@ no exporting or importing JSON.
 | Edit the page (text, layout, colors) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/edit/main/index.html> |
 | GitHub collaborators | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/access> |
 | GitHub secret for restores (`ARCHIVE_PASSCODE`) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/secrets/actions> |
+| Teacher passcode | Firestore → **Data** → `teacherPasscodes` collection |
 | GitHub Pages settings | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/pages> |
 | Firebase project | <https://console.firebase.google.com/project/writing-machines-website/overview> |
 | Firestore data & rules (entries, passcode) | <https://console.firebase.google.com/project/writing-machines-website/firestore> — **Data** and **Rules** tabs |
@@ -33,11 +38,27 @@ no exporting or importing JSON.
 
 ### Getting access (one time)
 - **GitHub:** the repo owner adds you under *GitHub collaborators* above. Accept the invite
-  from your email. This lets you run backups/restores and edit the page.
+  from your email. This lets you run backups/restores and edit the page. (A repo owned by a
+  personal account has only one admin, its owner. To give someone else admin rights, the repo
+  has to be transferred to them or moved into a GitHub organization.)
 - **Firebase:** the project owner adds your Google account under *Firebase members* above
   (role *Editor* or *Owner*). This lets you change the passcode and view the raw data.
 
 ### Common tasks
+
+**Change the order of entries**
+1. On the live site, click **Teacher sign-in** at the bottom of the page and enter the teacher
+   passcode. (It is asked again whenever the page is refreshed.)
+2. Click **Arrange Entries**. Drag cards to new spots, or use **First**, **Earlier**, and **Later**
+   on each card.
+3. Click **Save Order**. Everyone sees the new order right away; **Cancel** throws your changes away.
+
+New entries show up at the top, newest first, until you arrange them. Only the teacher passcode
+can change the order. The class passcode can't.
+
+**Change the teacher passcode**
+Same steps as the class passcode below, but in the `teacherPasscodes` collection. The teacher
+passcode also works anywhere the class passcode is asked for.
 
 **Change the class passcode**
 1. Firestore → **Data** tab → `passcodes` collection → delete the old document.
@@ -77,7 +98,8 @@ from it by running `restore.js` locally (see *Scripts* below) with the file's pa
 - [index.html](index.html) is the whole site, served by GitHub Pages.
 - Entries live in Firebase Firestore. The page reads and writes them directly.
 - [firestore.rules](firestore.rules) lets anyone read, but only lets a browser write after it
-  has sent a passcode that matches a document in the `passcodes` collection. Each browser gets
+  has sent a passcode that matches a document in the `passcodes` collection. Changing the order
+  of entries (the `order` field of `meta/archive`) also needs a passcode from `teacherPasscodes`. Each browser gets
   an invisible anonymous Firebase sign-in so the rules can tell browsers apart; students never
   see a login.
 - [backup.js](backup.js) runs nightly at 08:00 UTC via
@@ -103,7 +125,8 @@ To preview the site locally, run `npx serve .` (the page can't be opened by doub
 1. Firebase project → **Web** app registered; config in [firebase-config.js](firebase-config.js).
 2. **Security → Authentication → Sign-in method → Anonymous** enabled.
 3. **Databases & Storage → Firestore → Create database** (production mode); rules from
-   [firestore.rules](firestore.rules) published; `passcodes/<passcode>` document created.
+   [firestore.rules](firestore.rules) published; `passcodes/<passcode>` and
+   `teacherPasscodes/<teacher passcode>` documents created.
 4. `npm install` then `node seed.js <passcode>`.
 5. GitHub Pages: Settings → Pages → *Deploy from a branch*, `main`, `/ (root)`.
 6. GitHub secret `ARCHIVE_PASSCODE` set to the class passcode (used by restores).
