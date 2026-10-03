@@ -15,10 +15,12 @@ service cloud.firestore {
         && (exists(/databases/$(database)/documents/unlocked/$(request.auth.uid)) || teacher());
     }
 
-    // Anyone can read the archive; only unlocked browsers can change it.
+    // Anyone can read the archive; only unlocked browsers can add or edit entries,
+    // and only the teacher can delete them.
     match /entries/{id} {
       allow read: if true;
-      allow write: if unlocked();
+      allow create, update: if unlocked();
+      allow delete: if teacher();
     }
 
     // The order of entries (the "order" field of meta/archive) can only be changed by the teacher.

@@ -223,6 +223,7 @@
     align-items: start;
   }
   .entries-grid > * { margin-bottom: 20px; }
+  .entries-grid > [hidden] { display: none; }
 
   .empty-state {
     grid-column: 1 / -1;
@@ -716,7 +717,7 @@ import firebaseConfig from './firebase-config.js';
     passKind = kind;
     el('passTitle').textContent = kind === 'teacher' ? 'Teacher Passcode' : 'Passcode';
     el('passSub').textContent = kind === 'teacher'
-      ? 'Enter the teacher passcode to arrange entries'
+      ? 'Enter the teacher passcode to arrange or delete entries'
       : 'Enter the class passcode to add or change entries';
     el('fPasscode').value = '';
     el('passError').textContent = '';
@@ -739,9 +740,9 @@ import firebaseConfig from './firebase-config.js';
     el('btnPassEnter').disabled = true;
     try {
       await setDoc(doc(db, passKind === 'teacher' ? 'teachers' : 'unlocked', auth.currentUser.uid), { code });
-      if (passKind === 'teacher') { isTeacher = true; renderTeacherControls(); }
       unlocked = true;
       closePass(true);
+      if (passKind === 'teacher') { isTeacher = true; renderTeacherControls(); render(); }
     } catch (err) {
       el('passError').textContent = 'That passcode did not work.';
     } finally {
@@ -882,54 +883,101 @@ import firebaseConfig from './firebase-config.js';
   const masonry = new ResizeObserver(items => items.forEach(item => sizeCard(item.target)));
 
   // ── RENDER ENTRIES ──
+  // Cards are built once and reused while their entry is unchanged: searching and
+  // filtering only hide or show them, and other people's saves only touch the cards
+  // that changed. Rebuilding a card would restart any video playing in it.
+  const cards = new Map();   // entry id -> { html, node }
+  const emptyState = document.createElement('div');
+  emptyState.className = 'empty-state';
+
+  function cardHtml(e) {
+    const xref = e.xrefId ? findEntry(e.xrefId) : null;
+    const img = imageSrc(e.imageUrl);
+    const video = videoHtml(e.videoUrl);
+    const sourceUrl = safeUrl(e.sourceUrl);
+    const actions = arranging
+      ? `<div class="move-controls">
+           <span class="pos"></span>
+           <button data-move="first" title="Move to the start">⇤ First</button>
+           <button data-move="-1">◀ Earlier</button>
+           <button data-move="1">Later ▶</button>
+         </div>`
+      : `<div class="card-actions">
+           <button data-edit="${e.id}">Edit</button>
+           ${isTeacher ? `<button data-delete="${e.id}">Delete</button>` : ''}
+         </div>`;
+    return `
+      <article class="card" data-id="${e.id}" ${arranging ? 'draggable="true"' : ''}>
+        <div class="stamp-corner">${escapeHtml(e.category || 'Uncategorized')}</div>
+        <div class="card-meta">
+          <span>NO. ${num(e.id)}</span>
+          ${e.entrant ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(e.entrant))}" title="Show all entries by ${escapeHtml(e.entrant)}">${escapeHtml(e.entrant)}</button>` : ''}
+          ${e.source ? `<span>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(e.source)}</a>` : escapeHtml(e.source)}</span>` : ''}
+        </div>
+        <p class="card-fragment${e.isQuote ? ' is-quote' : ''}">${escapeHtml(e.fragment)}</p>
+        ${img ? `<img class="card-image" src="${escapeHtml(img)}" data-original="${escapeHtml(safeUrl(e.imageUrl))}" alt="Image for No. ${num(e.id)}" loading="lazy">` : ''}
+        ${video ? `<div class="card-video">${video}</div>` : ''}
+        ${e.annotation ? `<p class="card-annotation">${escapeHtml(e.annotation)}</p>` : ''}
+        <div class="card-footer">
+          <span class="tag-pill" data-cat="${escapeHtml(e.category || 'Uncategorized')}">${escapeHtml(e.category || 'Uncategorized')}</span>
+          ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${num(xref.id)}</a></div>` : ''}
+          ${actions}
+        </div>
+      </article>`.trim();
+  }
+
+  function cardFor(e) {
+    const html = cardHtml(e);
+    let c = cards.get(e.id);
+    if (!c || c.html !== html) {
+      if (c) { masonry.unobserve(c.node); c.node.remove(); }
+      const t = document.createElement('template');
+      t.innerHTML = html;
+      c = { html, node: t.content.firstElementChild };
+      cards.set(e.id, c);
+      masonry.observe(c.node);
+    }
+    return c.node;
+  }
+
+  // Put node at position i, moving as few nodes as possible. moveBefore (newer
+  // browsers) moves a card without reloading the video inside it.
+  function place(list, node, i) {
+    const at = list.children[i] || null;
+    if (at === node) return;
+    try { if (list.moveBefore && node.isConnected) { list.moveBefore(node, at); return; } } catch (err) {}
+    list.insertBefore(node, at);
+  }
+
   function renderEntries() {
     const list = el('entriesList');
-    const filtered = inOrder(getFiltered());
-    masonry.disconnect();
     list.classList.toggle('arranging', arranging);
+    const shown = new Set(getFiltered().map(e => e.id));
+    const ordered = inOrder(entries);
 
-    if (entries.length === 0) {
-      list.innerHTML = `<div class="empty-state"><p class="big">The archive is empty.</p><p>Click <strong>+ New Entry</strong> to add the first fragment.</p></div>`;
-    } else if (filtered.length === 0) {
-      list.innerHTML = `<div class="empty-state"><p class="big">No entries match.</p><p>Try a different search term or clear the constellation and contributor filters.</p></div>`;
-    } else {
-      list.innerHTML = filtered.map((e, i) => {
-        const xref = e.xrefId ? findEntry(e.xrefId) : null;
-        const img = imageSrc(e.imageUrl);
-        const video = videoHtml(e.videoUrl);
-        const sourceUrl = safeUrl(e.sourceUrl);
-        const actions = arranging
-          ? `<div class="move-controls">
-               <span class="pos">#${i + 1}</span>
-               <button data-move="first" ${i === 0 ? 'disabled' : ''} title="Move to the start">⇤ First</button>
-               <button data-move="-1" ${i === 0 ? 'disabled' : ''}>◀ Earlier</button>
-               <button data-move="1" ${i === filtered.length - 1 ? 'disabled' : ''}>Later ▶</button>
-             </div>`
-          : `<div class="card-actions">
-               <button data-edit="${e.id}">Edit</button>
-               <button data-delete="${e.id}">Delete</button>
-             </div>`;
-        return `
-          <article class="card" data-id="${e.id}" ${arranging ? 'draggable="true"' : ''}>
-            <div class="stamp-corner">${escapeHtml(e.category || 'Uncategorized')}</div>
-            <div class="card-meta">
-              <span>NO. ${num(e.id)}</span>
-              ${e.entrant ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(e.entrant))}" title="Show all entries by ${escapeHtml(e.entrant)}">${escapeHtml(e.entrant)}</button>` : ''}
-              ${e.source ? `<span>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(e.source)}</a>` : escapeHtml(e.source)}</span>` : ''}
-            </div>
-            <p class="card-fragment${e.isQuote ? ' is-quote' : ''}">${escapeHtml(e.fragment)}</p>
-            ${img ? `<img class="card-image" src="${escapeHtml(img)}" data-original="${escapeHtml(safeUrl(e.imageUrl))}" alt="Image for No. ${num(e.id)}" loading="lazy">` : ''}
-            ${video ? `<div class="card-video">${video}</div>` : ''}
-            ${e.annotation ? `<p class="card-annotation">${escapeHtml(e.annotation)}</p>` : ''}
-            <div class="card-footer">
-              <span class="tag-pill" data-cat="${escapeHtml(e.category || 'Uncategorized')}">${escapeHtml(e.category || 'Uncategorized')}</span>
-              ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${num(xref.id)}</a></div>` : ''}
-              ${actions}
-            </div>
-          </article>`;
-      }).join('');
+    cards.forEach((c, id) => {
+      if (!findEntry(id)) { masonry.unobserve(c.node); c.node.remove(); cards.delete(id); }
+    });
+    const nodes = ordered.map(cardFor);
+    nodes.forEach((node, i) => { node.hidden = !shown.has(ordered[i].id); place(list, node, i); });
+
+    if (arranging) {
+      nodes.forEach((node, i) => {
+        node.querySelector('.pos').textContent = '#' + (i + 1);
+        node.querySelector('[data-move="first"]').disabled = node.querySelector('[data-move="-1"]').disabled = i === 0;
+        node.querySelector('[data-move="1"]').disabled = i === nodes.length - 1;
+      });
     }
-    [...list.children].forEach(child => { sizeCard(child); masonry.observe(child); });
+
+    if (entries.length === 0 || shown.size === 0) {
+      emptyState.innerHTML = entries.length === 0
+        ? `<p class="big">The archive is empty.</p><p>Click <strong>+ New Entry</strong> to add the first fragment.</p>`
+        : `<p class="big">No entries match.</p><p>Try a different search term or clear the constellation and contributor filters.</p>`;
+      if (!emptyState.isConnected) { list.appendChild(emptyState); masonry.observe(emptyState); }
+    } else if (emptyState.isConnected) {
+      masonry.unobserve(emptyState);
+      emptyState.remove();
+    }
   }
 
   function renderCount() {
@@ -1142,8 +1190,8 @@ import firebaseConfig from './firebase-config.js';
   }
 
   async function deleteEntry(id) {
-    if (!confirm('Delete this entry? This cannot be undone unless you have an exported backup.')) return;
-    if (!await ensureUnlocked()) return;
+    if (!confirm('Delete this entry? It can be brought back from a nightly backup (see the README).')) return;
+    if (!await ensureTeacher()) return;
     const batch = writeBatch(db);
     batch.delete(doc(db, 'entries', String(id)));
     entries.forEach(e => { if (e.xrefId === id) batch.update(doc(db, 'entries', String(e.id)), {xrefId: null}); });

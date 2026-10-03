@@ -7,7 +7,7 @@ on:
         description: 'Backup date to restore from (YYYY-MM-DD — see the backups folder)'
         required: true
       entries:
-        description: 'Optional: entry numbers to put back exactly as in the backup, e.g. 3,5. Leave blank to bring back deleted entries only.'
+        description: 'Optional: entry numbers to put back exactly as in the backup, e.g. 3,5 — or the word order to put the order of entries back. Leave blank to bring back deleted entries only.'
         required: false
         default: ''
 

@@ -8,8 +8,8 @@ no exporting or importing JSON.
 ## For students
 - Open the link to read the archive. Search, the contributor menu, and the constellation filters
   work for everyone. Click a name on any card to see everything that person entered.
-- **+ New Entry**, **Edit**, and **Delete** ask for the class passcode (get it from your
-  instructor). It is asked again whenever the page is refreshed.
+- **+ New Entry** and **Edit** ask for the class passcode (get it from your instructor). It is
+  asked again whenever the page is refreshed. Only the teacher can delete entries.
 - Entries can include an **image** and a **video**. Paste a link to an image file or a Google
   Drive image, and a YouTube, Google Drive, or direct .mp4 / .mp3 link for video or audio. Drive files must
   be shared as *Anyone with the link*. Images show whole; click one to see it full size.
@@ -28,7 +28,7 @@ no exporting or importing JSON.
 | Restore from a backup | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/actions/workflows/restore.yml> → **Run workflow** |
 | Edit the page (text, layout, colors) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/edit/main/index.html> |
 | GitHub collaborators | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/access> |
-| GitHub secret for restores (`ARCHIVE_PASSCODE`) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/secrets/actions> |
+| GitHub secret for restores (`ARCHIVE_PASSCODE`, best set to the teacher passcode) | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/secrets/actions> |
 | Teacher passcode | Firestore → **Data** → `teacherPasscodes` collection |
 | GitHub Pages settings | <https://github.com/amarella1697/ENGL-178-Writing-Machines-Website/settings/pages> |
 | Firebase project | <https://console.firebase.google.com/project/writing-machines-website/overview> |
@@ -46,9 +46,13 @@ no exporting or importing JSON.
 
 ### Common tasks
 
+**Sign in as the teacher**
+Click **Teacher sign-in** at the bottom of the live site and enter the teacher passcode. It is
+asked again whenever the page is refreshed. Signed in, you can arrange and delete entries, as
+well as everything students can do.
+
 **Change the order of entries**
-1. On the live site, click **Teacher sign-in** at the bottom of the page and enter the teacher
-   passcode. (It is asked again whenever the page is refreshed.)
+1. Sign in as the teacher (above).
 2. Click **Arrange Entries**. Drag cards to new spots, or use **First**, **Earlier**, and **Later**
    on each card.
 3. Click **Save Order**. Everyone sees the new order right away; **Cancel** throws your changes away.
@@ -56,16 +60,25 @@ no exporting or importing JSON.
 New entries show up at the top, newest first, until you arrange them. Only the teacher passcode
 can change the order. The class passcode can't.
 
+To undo a bad arrangement, run *Restore from a backup* with a date from before it and type
+`order` in **entries**.
+
+**Delete an entry**
+Sign in as the teacher; a **Delete** button then appears on every card. Deleted entries can be
+brought back from a backup (below).
+
 **Change the teacher passcode**
 Same steps as the class passcode below, but in the `teacherPasscodes` collection. The teacher
-passcode also works anywhere the class passcode is asked for.
+passcode also works anywhere the class passcode is asked for. If the `ARCHIVE_PASSCODE` GitHub
+secret holds the teacher passcode, update it too. To sign out browsers that are already signed
+in as the teacher, also delete the `teachers` collection.
 
 **Change the class passcode**
 1. Firestore → **Data** tab → `passcodes` collection → delete the old document.
 2. **Add document** → Document ID = the new passcode (type it; don't use Auto-ID) → add a
    field `note` = `class passcode` → Save. Students need the new code from their next refresh.
-3. Update the GitHub secret `ARCHIVE_PASSCODE` (link above) to the new passcode, so restores
-   keep working.
+3. If the GitHub secret `ARCHIVE_PASSCODE` (link above) holds the class passcode, update it
+   to the new one so restores keep working.
 
 To lock out pages that are already open and unlocked, also delete the `unlocked` collection.
 
@@ -99,7 +112,8 @@ from it by running `restore.js` locally (see *Scripts* below) with the file's pa
 - Entries live in Firebase Firestore. The page reads and writes them directly.
 - [firestore.rules](firestore.rules) lets anyone read, but only lets a browser write after it
   has sent a passcode that matches a document in the `passcodes` collection. Changing the order
-  of entries (the `order` field of `meta/archive`) also needs a passcode from `teacherPasscodes`. Each browser gets
+  of entries (the `order` field of `meta/archive`) and deleting entries need a passcode from
+  `teacherPasscodes`. Each browser gets
   an invisible anonymous Firebase sign-in so the rules can tell browsers apart; students never
   see a login.
 - [backup.js](backup.js) runs nightly at 08:00 UTC via
@@ -113,6 +127,7 @@ from it by running `restore.js` locally (see *Scripts* below) with the file's pa
 $env:ARCHIVE_PASSCODE = "<passcode>"
 node restore.js 2026-09-28            # bring back deleted entries
 node restore.js 2026-09-28 3,5        # put entries 3 and 5 back as they were
+node restore.js 2026-09-28 order      # put the order of entries back (teacher passcode)
 node restore.js path\to\backup.json   # restore from a downloaded backup file
 node backup.js                        # write today's backup to backups/
 ```
@@ -129,7 +144,8 @@ To preview the site locally, run `npx serve .` (the page can't be opened by doub
    `teacherPasscodes/<teacher passcode>` documents created.
 4. `npm install` then `node seed.js <passcode>`.
 5. GitHub Pages: Settings → Pages → *Deploy from a branch*, `main`, `/ (root)`.
-6. GitHub secret `ARCHIVE_PASSCODE` set to the class passcode (used by restores).
+6. GitHub secret `ARCHIVE_PASSCODE` set to a passcode for restores. The teacher passcode is
+   best: the class passcode works for entries but can't restore the order.
 
 The `apiKey` in `firebase-config.js` is a public identifier, not a secret; Firebase's docs say
 it's safe to commit. Access is enforced by `firestore.rules`.
