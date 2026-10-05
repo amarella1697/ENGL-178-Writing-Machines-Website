@@ -9,7 +9,8 @@ no exporting or importing JSON.
 - Open the link to read the archive. Search, the contributor menu, and the constellation filters
   work for everyone. Click a name on any card to see everything that person entered.
 - **+ New Entry** and **Edit** ask for the class passcode (get it from your instructor). It is
-  asked again whenever the page is refreshed. Only the teacher can delete entries.
+  asked again whenever the page is refreshed. Only the teacher can delete entries, but if you
+  **Edit** an entry and clear every field, it is removed from the site.
 - Entries can include an **image** and a **video**. Paste a link to an image file or a Google
   Drive image, and a YouTube, Google Drive, or direct .mp4 / .mp3 link for video or audio. Drive files must
   be shared as *Anyone with the link*. Images show whole; click one to see it full size.
@@ -93,6 +94,9 @@ number. Entries that still exist are not touched. Click the finished run to see 
 **Undo a bad edit**
 Same as above, but type the entry number(s) in **entries**, e.g. `7` or `3,5`. Those entries are
 put back exactly as they were in that backup.
+
+This is also how to bring back an entry someone emptied (cleared every field, which hides it from
+the site). Leaving **entries** blank won't bring it back, because the emptied entry still exists.
 
 **Edit the archive's subtitle, "by" line, or introduction**
 Click the text at the top of the live site, type, then click elsewhere. It asks for the passcode

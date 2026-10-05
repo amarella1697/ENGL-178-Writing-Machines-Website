@@ -689,7 +689,8 @@ import firebaseConfig from './firebase-config.js';
   const metaRef = doc(db, 'meta', 'archive');
   const HEADER_FIELDS = { subtitleField: 'subtitle', byField: 'by', introField: 'intro' };
 
-  let entries = [];
+  let allEntries = [];   // every entry document, including emptied ones
+  let entries = [];      // the entries shown on the site: emptied ones are left out
   let nextId = 1;
   let meta = {};
   let activeTag = null;
@@ -822,6 +823,11 @@ import firebaseConfig from './firebase-config.js';
   }
 
   function findEntry(id) { return entries.find(e => e.id === id); }
+
+  // An entry with every field cleared is not shown anywhere. Its document is kept
+  // (students can't delete), so it can still be restored from a backup.
+  const CONTENT_FIELDS = ['entrant', 'fragment', 'imageUrl', 'videoUrl', 'annotation', 'source', 'sourceUrl'];
+  function isBlank(e) { return CONTENT_FIELDS.every(f => !String(e[f] || '').trim()); }
 
   // Entries follow the teacher's saved order. Entries added since it was saved
   // aren't in it yet, so they come first, newest first.
@@ -1155,7 +1161,6 @@ import firebaseConfig from './firebase-config.js';
 
   async function saveEntry() {
     const fragment = el('fFragment').value.trim();
-    if (!fragment) { el('formError').textContent = 'The fragment cannot be empty.'; return; }
     const data = {
       entrant: el('fEntrant').value.trim(),
       fragment,
@@ -1168,6 +1173,12 @@ import firebaseConfig from './firebase-config.js';
       category: el('fCategory').value.trim() || 'Uncategorized',
       xrefId: el('fXref').value ? parseInt(el('fXref').value, 10) : null
     };
+    if (editingId && isBlank(data)) {
+      if (!confirm('Every field is empty, so this entry will be removed from the site. It can be brought back from a nightly backup.\n\nRemove it?')) return;
+    } else if (!fragment) {
+      el('formError').textContent = 'The fragment cannot be empty. (To remove an entry, clear every field.)';
+      return;
+    }
     el('btnSave').disabled = true;
     try {
       if (editingId) {
@@ -1176,7 +1187,7 @@ import firebaseConfig from './firebase-config.js';
         // Transaction so two students saving at once never get the same number.
         await runTransaction(db, async tx => {
           const m = (await tx.get(metaRef)).data() || {};
-          const id = Math.max(m.nextId || 1, ...entries.map(e => e.id + 1));
+          const id = Math.max(m.nextId || 1, ...allEntries.map(e => e.id + 1));
           tx.set(doc(db, 'entries', String(id)), Object.assign({id}, data));
           tx.set(metaRef, {nextId: id + 1}, {merge: true});
         });
@@ -1194,7 +1205,7 @@ import firebaseConfig from './firebase-config.js';
     if (!await ensureTeacher()) return;
     const batch = writeBatch(db);
     batch.delete(doc(db, 'entries', String(id)));
-    entries.forEach(e => { if (e.xrefId === id) batch.update(doc(db, 'entries', String(e.id)), {xrefId: null}); });
+    allEntries.forEach(e => { if (e.xrefId === id) batch.update(doc(db, 'entries', String(e.id)), {xrefId: null}); });
     try { await batch.commit(); } catch (err) { alert('Could not delete: ' + err.message); }
   }
 
@@ -1210,7 +1221,7 @@ import firebaseConfig from './firebase-config.js';
       exportedAt: new Date().toISOString(),
       nextId,
       order: meta.order || [],
-      entries
+      entries: allEntries
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
@@ -1225,7 +1236,8 @@ import firebaseConfig from './firebase-config.js';
 
   // ── LIVE SYNC ──
   onSnapshot(collection(db, 'entries'), snap => {
-    entries = snap.docs.map(d => d.data());
+    allEntries = snap.docs.map(d => d.data());
+    entries = allEntries.filter(e => !isBlank(e));
     render();
   }, err => { el('footerHint').textContent = 'Could not load the archive: ' + err.message; });
 
