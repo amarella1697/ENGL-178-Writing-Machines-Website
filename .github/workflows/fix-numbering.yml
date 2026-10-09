@@ -1,0 +1,23 @@
+name: One-time numbering fix
+
+on:
+  push:
+    paths:
+      - fix-numbering.js
+
+permissions:
+  contents: read
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node fix-numbering.js --apply
+        env:
+          ARCHIVE_PASSCODE: ${{ secrets.ARCHIVE_PASSCODE }}
