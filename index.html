@@ -76,6 +76,8 @@
     color: var(--ink);
     padding: 2px 4px;
     width: 340px;
+    max-width: 100%;
+    text-align: center;
   }
   .by-line input:focus { outline: none; border-bottom-color: var(--stamp); }
 
@@ -1254,6 +1256,7 @@ import firebaseConfig from './firebase-config.js';
       if (document.activeElement !== el(id)) el(id).value = meta[key] || '';
     });
     fitIntro();
+    fitBy();
     render();
   });
 
@@ -1265,6 +1268,19 @@ import firebaseConfig from './firebase-config.js';
   }
   el('introField').addEventListener('input', fitIntro);
   window.addEventListener('resize', fitIntro);
+
+  // The "by" box is as wide as its text, so the whole "by …" line sits centered.
+  function fitBy() {
+    const f = el('byField');
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font:' + getComputedStyle(f).font;
+    probe.textContent = f.value || f.placeholder;
+    document.body.appendChild(probe);
+    f.style.width = Math.ceil(probe.getBoundingClientRect().width) + 14 + 'px';
+    probe.remove();
+  }
+  el('byField').addEventListener('input', fitBy);
+  fitBy();
 
   Object.entries(HEADER_FIELDS).forEach(([id, key]) => {
     el(id).addEventListener('change', async () => {
