@@ -1,10 +1,12 @@
 // Restore entries from a backup into Firestore (run by .github/workflows/restore.yml,
 // or locally after npm install).
 // Usage: node restore.js <YYYY-MM-DD | path/to/backup.json> [entry numbers, e.g. 3,5 | order]
-//   No entry numbers: brings back every entry that is in the backup but missing now
-//     (deleted entries), under its original number. Existing entries are not touched.
-//   Entry numbers: puts those entries back exactly as they were in the backup,
-//     replacing their current versions (undoes bad edits too).
+//   No entry numbers: brings back every entry that is in the backup but deleted or emptied
+//     now. Other entries are not touched.
+//   Entry numbers, as shown on the site now: puts those entries back exactly as they were
+//     in the backup, replacing their current versions (undoes bad edits).
+//   (The site numbers entries 1, 2, 3… without gaps; each entry also has a permanent id,
+//   which is what backups store. This script translates between the two.)
 //   "order": puts the order of entries back as it was in the backup (teacher passcode only).
 // The passcode must be in the ARCHIVE_PASSCODE environment variable. The teacher passcode
 // does everything; the class passcode can't restore the order.
@@ -50,15 +52,25 @@ if (mode.toLowerCase() === 'order') {
   process.exit(0);
 }
 
+// Same test as the site: an entry with every field cleared is not shown.
+const CONTENT_FIELDS = ['entrant', 'fragment', 'imageUrl', 'videoUrl', 'annotation', 'source', 'sourceUrl'];
+const isBlank = e => CONTENT_FIELDS.every(f => !String(e[f] || '').trim());
+const current = (await getDocs(collection(db, 'entries'))).docs.map(d => d.data());
+// The numbers the site shows: shown entries counted in order of id.
+const shownIds = current.filter(e => !isBlank(e)).map(e => e.id).sort((a, b) => a - b);
+
 let toRestore;
 if (mode) {
-  const ids = mode.split(',').map(s => Number(s.trim()));
-  const notInBackup = ids.filter(id => !backup.entries.some(e => e.id === id));
-  if (notInBackup.length) { console.error(`Not in this backup: ${notInBackup.join(', ')}`); process.exit(1); }
+  const numbers = mode.split(',').map(s => Number(s.trim()));
+  const notOnSite = numbers.filter(n => !(n >= 1 && n <= shownIds.length));
+  if (notOnSite.length) { console.error(`No entry with these numbers on the site: ${notOnSite.join(', ')}`); process.exit(1); }
+  const ids = numbers.map(n => shownIds[n - 1]);
+  const notInBackup = numbers.filter((n, i) => !backup.entries.some(e => e.id === ids[i]));
+  if (notInBackup.length) { console.error(`These entries are newer than this backup: ${notInBackup.join(', ')}`); process.exit(1); }
   toRestore = backup.entries.filter(e => ids.includes(e.id));
 } else {
-  const current = new Set((await getDocs(collection(db, 'entries'))).docs.map(d => Number(d.id)));
-  toRestore = backup.entries.filter(e => !current.has(e.id));
+  const kept = new Set(current.filter(e => !isBlank(e)).map(e => e.id));
+  toRestore = backup.entries.filter(e => !kept.has(e.id) && !isBlank(e));
 }
 
 const batch = writeBatch(db);
@@ -75,7 +87,7 @@ if (metaMissing) {
 await batch.commit();
 
 if (toRestore.length === 0) console.log('Nothing to restore — every entry in this backup is already in the archive.');
-toRestore.forEach(e => console.log(`Restored No. ${String(e.id).padStart(3, '0')} — ${e.fragment.slice(0, 60)}`));
+toRestore.forEach(e => console.log(`Restored: ${e.entrant || 'no name'} — ${e.fragment.slice(0, 60)} (id ${e.id})`));
 if (metaMissing) console.log('Also restored the archive title fields and numbering.');
 if (restoreOrder) console.log('Also restored the order of entries.');
 else if (metaMissing && backup.order && backup.order.length) console.log('The order of entries was not restored: that needs the teacher passcode in ARCHIVE_PASSCODE.');

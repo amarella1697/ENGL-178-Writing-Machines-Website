@@ -693,6 +693,10 @@ import firebaseConfig from './firebase-config.js';
 
   let allEntries = [];   // every entry document, including emptied ones
   let entries = [];      // the entries shown on the site: emptied ones are left out
+  // Numbers shown on the site count the shown entries 1, 2, 3… in the order they were
+  // added, so deleted or emptied entries leave no gaps. The entry's id (its document
+  // name, used by backups and restores) never changes.
+  let shownNo = new Map();
   let nextId = 1;
   let meta = {};
   let activeTag = null;
@@ -706,6 +710,7 @@ import firebaseConfig from './firebase-config.js';
 
   const el = id => document.getElementById(id);
   const num = id => String(id).padStart(3, '0');
+  const no = id => num(shownNo.get(id) || id);
   const nameKey = name => (name || '').trim().toLowerCase();
 
   // ── PASSCODE ──
@@ -918,17 +923,17 @@ import firebaseConfig from './firebase-config.js';
       <article class="card" data-id="${e.id}" ${arranging ? 'draggable="true"' : ''}>
         <div class="stamp-corner">${escapeHtml(e.category || 'Uncategorized')}</div>
         <div class="card-meta">
-          <span>NO. ${num(e.id)}</span>
+          <span>NO. ${no(e.id)}</span>
           ${e.entrant ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(e.entrant))}" title="Show all entries by ${escapeHtml(e.entrant)}">${escapeHtml(e.entrant)}</button>` : ''}
           ${e.source ? `<span>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(e.source)}</a>` : escapeHtml(e.source)}</span>` : ''}
         </div>
         <p class="card-fragment${e.isQuote ? ' is-quote' : ''}">${escapeHtml(e.fragment)}</p>
-        ${img ? `<img class="card-image" src="${escapeHtml(img)}" data-original="${escapeHtml(safeUrl(e.imageUrl))}" alt="Image for No. ${num(e.id)}" loading="lazy">` : ''}
+        ${img ? `<img class="card-image" src="${escapeHtml(img)}" data-original="${escapeHtml(safeUrl(e.imageUrl))}" alt="Image for No. ${no(e.id)}" loading="lazy">` : ''}
         ${video ? `<div class="card-video">${video}</div>` : ''}
         ${e.annotation ? `<p class="card-annotation">${escapeHtml(e.annotation)}</p>` : ''}
         <div class="card-footer">
           <span class="tag-pill" data-cat="${escapeHtml(e.category || 'Uncategorized')}">${escapeHtml(e.category || 'Uncategorized')}</span>
-          ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${num(xref.id)}</a></div>` : ''}
+          ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${no(xref.id)}</a></div>` : ''}
           ${actions}
         </div>
       </article>`.trim();
@@ -1134,7 +1139,7 @@ import firebaseConfig from './firebase-config.js';
     const entry = id ? findEntry(id) : null;
 
     el('formTitle').textContent = entry ? 'Edit Entry' : 'New Entry';
-    el('formCardNum').textContent = entry ? num(entry.id) : num(nextId);
+    el('formCardNum').textContent = entry ? no(entry.id) : num(entries.length + 1);
     el('fEntrant').value = entry ? (entry.entrant || '') : '';
     el('fFragment').value = entry ? entry.fragment : '';
     el('fIsQuote').checked = entry ? !!entry.isQuote : false;
@@ -1151,7 +1156,7 @@ import firebaseConfig from './firebase-config.js';
     xrefSelect.innerHTML = '<option value="">— none —</option>' + entries
       .filter(e => !entry || e.id !== entry.id)
       .sort((a,b) => a.id - b.id)
-      .map(e => `<option value="${e.id}">No. ${num(e.id)} — ${escapeHtml(e.fragment.slice(0,50))}${e.fragment.length>50?'…':''}</option>`)
+      .map(e => `<option value="${e.id}">No. ${no(e.id)} — ${escapeHtml(e.fragment.slice(0,50))}${e.fragment.length>50?'…':''}</option>`)
       .join('');
     xrefSelect.value = entry && entry.xrefId ? String(entry.xrefId) : '';
 
@@ -1207,7 +1212,7 @@ import firebaseConfig from './firebase-config.js';
   }
 
   async function deleteEntry(id) {
-    if (!confirm('Delete this entry? It can be brought back from a nightly backup (see the README).')) return;
+    if (!confirm('Delete this entry? Entries after it are renumbered. It can be brought back from a nightly backup (see the README).')) return;
     if (!await ensureTeacher()) return;
     const batch = writeBatch(db);
     batch.delete(doc(db, 'entries', String(id)));
@@ -1244,6 +1249,7 @@ import firebaseConfig from './firebase-config.js';
   onSnapshot(collection(db, 'entries'), snap => {
     allEntries = snap.docs.map(d => d.data());
     entries = allEntries.filter(e => !isBlank(e));
+    shownNo = new Map(entries.map(e => e.id).sort((a, b) => a - b).map((id, i) => [id, i + 1]));
     render();
   }, err => { el('footerHint').textContent = 'Could not load the archive: ' + err.message; });
 

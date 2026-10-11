@@ -68,6 +68,10 @@ To undo a bad arrangement, run *Restore from a backup* with a date from before i
 Sign in as the teacher; a **Delete** button then appears on every card. Deleted entries can be
 brought back from a backup (below).
 
+The site numbers entries 1, 2, 3… in the order they were added, so when one is deleted (or
+emptied), the entries after it move up a number. Behind the scenes each entry keeps a permanent
+id, which is what backups store; restores handle the difference for you.
+
 **Change the teacher passcode**
 Same steps as the class passcode below, but in the `teacherPasscodes` collection. The teacher
 passcode also works anywhere the class passcode is asked for. If the `ARCHIVE_PASSCODE` GitHub
@@ -83,20 +87,18 @@ in as the teacher, also delete the `teachers` collection.
 
 To lock out pages that are already open and unlocked, also delete the `unlocked` collection.
 
-**Bring back deleted entries**
+**Bring back deleted or emptied entries**
 1. Open *Restore from a backup* (link above) → **Run workflow**.
 2. **date:** pick a date from the backups folder from *before* the deletion, e.g. `2026-09-28`.
 3. Leave **entries** blank → **Run workflow**.
 
-Every entry that is in that backup but missing from the archive comes back under its original
-number. Entries that still exist are not touched. Click the finished run to see what was restored.
+Every entry that is in that backup but has since been deleted or emptied comes back in its
+original place; the numbers after it move back up. Other entries are not touched. Click the
+finished run to see what was restored.
 
 **Undo a bad edit**
-Same as above, but type the entry number(s) in **entries**, e.g. `7` or `3,5`. Those entries are
-put back exactly as they were in that backup.
-
-This is also how to bring back an entry someone emptied (cleared every field, which hides it from
-the site). Leaving **entries** blank won't bring it back, because the emptied entry still exists.
+Same as above, but type the entry number(s) as they show on the site **now** in **entries**,
+e.g. `7` or `3,5`. Those entries are put back exactly as they were in that backup.
 
 **Edit the archive's subtitle, "by" line, or introduction**
 Click the text at the top of the live site, type, then click elsewhere. It asks for the passcode
