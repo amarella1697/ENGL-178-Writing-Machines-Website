@@ -260,11 +260,14 @@
     text-transform: uppercase;
     padding: 4px 9px;
     border-radius: 0 2px 0 6px;
+    cursor: pointer;
     max-width: 55%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  .stamp-corner:hover { background: #9c356a; }
 
   .card-meta {
     display: flex;
@@ -350,20 +353,6 @@
     margin-top: auto;
   }
 
-  .tag-pill {
-    font-family: 'Courier New', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: transparent;
-    border: 1px solid var(--sage);
-    color: var(--sage);
-    padding: 2px 7px;
-    border-radius: 10px;
-    cursor: pointer;
-  }
-  .tag-pill:hover { background: var(--sage); color: var(--paper); }
-
   .card-xref {
     font-size: 13px;
     color: var(--sage);
@@ -371,7 +360,7 @@
   }
   .card-xref a { color: var(--sage); cursor: pointer; text-decoration: underline; }
 
-  .card-actions { display: flex; gap: 4px; }
+  .card-actions { display: flex; gap: 4px; margin-left: auto; }
   .card-actions button { font-size: 10px; padding: 5px 9px; }
 
   /* ── ARRANGE MODE (teacher) ── */
@@ -403,7 +392,7 @@
   .arranging .card.drop-before { box-shadow: -5px 0 0 var(--stamp); }
   .arranging .card.drop-after { box-shadow: 5px 0 0 var(--stamp); }
   .arranging .card iframe, .arranging .card video { pointer-events: none; }
-  .move-controls { display: flex; gap: 4px; align-items: center; }
+  .move-controls { display: flex; gap: 4px; align-items: center; margin-left: auto; }
   .move-controls button { font-size: 10px; padding: 5px 9px; }
   .move-controls .pos { font-family: 'Courier New', monospace; font-size: 11px; color: var(--ink-soft); margin-right: 4px; }
 
@@ -921,7 +910,7 @@ import firebaseConfig from './firebase-config.js';
          </div>`;
     return `
       <article class="card" data-id="${e.id}" ${arranging ? 'draggable="true"' : ''}>
-        <div class="stamp-corner">${escapeHtml(e.category || 'Uncategorized')}</div>
+        <div class="stamp-corner" data-cat="${escapeHtml(e.category || 'Uncategorized')}" title="Show this constellation">${escapeHtml(e.category || 'Uncategorized')}</div>
         <div class="card-meta">
           <span>NO. ${no(e.id)}</span>
           ${e.entrant ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(e.entrant))}" title="Show all entries by ${escapeHtml(e.entrant)}">${escapeHtml(e.entrant)}</button>` : ''}
@@ -932,7 +921,6 @@ import firebaseConfig from './firebase-config.js';
         ${video ? `<div class="card-video">${video}</div>` : ''}
         ${e.annotation ? `<p class="card-annotation">${escapeHtml(e.annotation)}</p>` : ''}
         <div class="card-footer">
-          <span class="tag-pill" data-cat="${escapeHtml(e.category || 'Uncategorized')}">${escapeHtml(e.category || 'Uncategorized')}</span>
           ${xref ? `<div class="card-xref">↝ <a data-goto="${xref.id}">No. ${no(xref.id)}</a></div>` : ''}
           ${actions}
         </div>
@@ -1030,8 +1018,8 @@ import firebaseConfig from './firebase-config.js';
     } else if (t.closest('[data-entrant]') && !arranging) {
       activeEntrant = t.closest('[data-entrant]').dataset.entrant;
       render();
-    } else if (t.closest('.tag-pill') && !arranging) {
-      activeTag = t.closest('.tag-pill').dataset.cat;
+    } else if (t.closest('.stamp-corner') && !arranging) {
+      activeTag = t.closest('.stamp-corner').dataset.cat;
       render();
     } else if (t.matches('.card-image') && !arranging) {
       el('lightboxImg').src = t.src;
