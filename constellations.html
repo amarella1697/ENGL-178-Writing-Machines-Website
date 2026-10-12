@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constellations — The Writing Machines Project</title>
+<style>
+  :root {
+    --sky: #0F0F1D;
+    --ink: #1A1A2E;
+    --paper: #E6E7E8;
+    --paper-raised: #F1F2F2;
+    --ink-soft: #4A4A63;
+    --stamp: #C6488C;
+    --stamp-soft: #DFA0C2;
+    --sage: #00A896;
+    --muted: #9A9AB3;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--sky);
+    color: var(--paper);
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  }
+
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+  .mono {
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── TOP BAR ── */
+  .top {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 18px 20px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    background: linear-gradient(var(--sky) 40%, transparent);
+    pointer-events: none;
+  }
+  .top > * { pointer-events: auto; }
+  h1 { font-weight: 400; font-size: clamp(22px, 3.4vw, 34px); margin: 0; }
+  .stats { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  a.back {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--paper);
+    border: 1px solid var(--paper);
+    border-radius: 2px;
+    padding: 9px 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+  a.back:hover { background: var(--paper); color: var(--ink); }
+  a.back:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+
+  /* ── LEGEND ── */
+  .legend {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .legend h2 { font-size: 10px; color: var(--muted); margin: 0 0 4px; font-weight: 400; }
+  .legend button {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    background: rgba(15, 15, 29, 0.7);
+    border: 1px solid #3A3A55;
+    color: var(--paper);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .legend button:hover { border-color: var(--stamp-soft); }
+  .legend button.active { background: var(--stamp); border-color: var(--stamp); font-weight: bold; }
+  .legend button:focus-visible { outline: 2px solid var(--stamp-soft); outline-offset: 2px; }
+  .legend .count { opacity: 0.6; margin-left: 6px; font-size: 10px; }
+
+  .hint {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.8;
+  }
+  .hint .key { display: inline-block; width: 18px; height: 2px; vertical-align: middle; margin-right: 6px; }
+
+  /* ── LABELS & TOOLTIP ── */
+  .label {
+    position: fixed;
+    top: 0; left: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--stamp-soft);
+    white-space: nowrap;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    transition: opacity 0.3s;
+  }
+  .label:hover { color: #fff; }
+  .label.dim { opacity: 0.25; }
+
+  .tip {
+    position: fixed;
+    top: 0; left: 0;
+    width: min(300px, calc(100vw - 32px));
+    background: var(--paper-raised);
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    padding: 12px 14px;
+    box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.3);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .tip[hidden] { display: none; }
+  .tip .meta { font-size: 11px; color: var(--ink-soft); margin-bottom: 6px; letter-spacing: 0.04em; }
+  .tip .meta b { color: var(--stamp); }
+  .tip .frag { margin: 0 0 8px; }
+  .tip .cat { font-size: 10px; color: var(--stamp); margin-bottom: 8px; }
+  .tip a { font-family: 'Courier New', Courier, monospace; font-size: 11px; color: var(--sage); }
+
+  .notice {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .notice a { color: var(--stamp-soft); pointer-events: auto; }
+
+  @media (max-width: 640px) {
+    .top { padding: 14px 16px 24px; }
+    .legend {
+      left: 0; right: 0; bottom: 0;
+      flex-direction: row;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 12px 16px 16px;
+      background: linear-gradient(transparent, var(--sky) 40%);
+    }
+    .legend h2 { display: none; }
+    .legend button { flex: none; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky" aria-label="A 3D map of the archive: each entry is a star, grouped by constellation"></canvas>
+
+<div class="top">
+  <div>
+    <h1>Constellations</h1>
+    <div class="stats mono" id="stats">Loading the sky…</div>
+  </div>
+  <a class="back" href="index.html">← Back to the archive</a>
+</div>
+
+<div id="labels"></div>
+<nav class="legend" id="legend" aria-label="Constellations"></nav>
+
+<div class="hint mono">
+  <div>Drag to turn · scroll to zoom</div>
+  <div>Point at a star to read it · click to open it</div>
+  <div><span class="key" style="background:var(--stamp-soft)"></span>Same constellation</div>
+  <div><span class="key" style="background:#19D3BE"></span>Cross-reference</div>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+<div class="notice" id="notice" hidden></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
+import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import firebaseConfig from './firebase-config.js';
+
+// Each entry is a star. Stars in the same constellation cluster together and are joined
+// like a star chart; cross-references are drawn as brighter lines between stars.
+
+const el = id => document.getElementById(id);
+const COLOR = {
+  star: new THREE.Color('#F07BB8'),
+  starDim: new THREE.Color('#3A2C45'),
+  hover: new THREE.Color('#FFFFFF'),
+  link: new THREE.Color('#DFA0C2'),
+  linkDim: new THREE.Color('#251F33'),
+  xref: new THREE.Color('#19D3BE'),
+  xrefDim: new THREE.Color('#133B3A')
+};
+// Same rules as the archive page: emptied entries are hidden, numbers have no gaps.
+const CONTENT_FIELDS = ['entrant', 'fragment', 'imageUrl', 'videoUrl', 'annotation', 'source', 'sourceUrl'];
+const isBlank = e => CONTENT_FIELDS.every(f => !String(e[f] || '').trim());
+const categoryOf = e => e.category || 'Uncategorized';
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+function showNotice(html) { el('notice').innerHTML = html; el('notice').hidden = false; }
+
+// ── SCENE ──
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: el('sky'), antialias: true });
+} catch (err) {
+  showNotice('This browser can\'t draw the 3D view. <a href="index.html">Back to the archive</a>');
+  throw err;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#0F0F1D');
+scene.fog = new THREE.FogExp2('#0F0F1D', 0.0012);
+const camera = new THREE.PerspectiveCamera(55, 1, 1, 5000);
+camera.position.set(0, 80, 320);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.minDistance = 15;
+controls.maxDistance = 900;
+controls.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+controls.autoRotateSpeed = 0.35;
+controls.addEventListener('start', () => { controls.autoRotate = false; flight = null; });
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+// A soft round glow, used for every star.
+function glowTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.18, 'rgba(255,255,255,0.9)');
+  grad.addColorStop(0.45, 'rgba(255,255,255,0.25)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const glow = glowTexture();
+
+// Faint background stars, far away, so the sky has depth.
+(function dust() {
+  const n = 1400, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const v = new THREE.Vector3().randomDirection().multiplyScalar(1200 + Math.random() * 1200);
+    v.toArray(pos, i * 3);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
+    size: 1.6, sizeAttenuation: false, color: '#8A8AA8', transparent: true, opacity: 0.6, fog: false
+  })));
+})();
+
+// ── LAYOUT ──
+// Positions come from each entry's id, so a star stays in the same place between visits.
+function seeded(seed) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function layout(list) {
+  const groups = new Map();
+  list.forEach(e => {
+    const c = categoryOf(e);
+    if (!groups.has(c)) groups.set(c, []);
+    groups.get(c).push(e);
+  });
+  const names = [...groups.keys()].sort((a, b) => groups.get(b).length - groups.get(a).length || a.localeCompare(b));
+  const R = 70 + 24 * Math.sqrt(names.length);
+  const clusters = names.map((name, i) => {
+    // Spread the constellations evenly over a slightly flattened sphere.
+    const n = names.length;
+    const y = n === 1 ? 0 : 1 - (i / (n - 1)) * 2;
+    const r = Math.sqrt(1 - y * y), phi = i * Math.PI * (3 - Math.sqrt(5));
+    const center = new THREE.Vector3(Math.cos(phi) * r, y * 0.6, Math.sin(phi) * r).multiplyScalar(R);
+    const members = groups.get(name).sort((a, b) => a.id - b.id);
+    const spread = 8 + 6 * Math.sqrt(members.length);
+    members.forEach(e => {
+      const rnd = seeded(e.id * 7919);
+      const u = rnd() * 2 - 1, t = rnd() * Math.PI * 2, d = spread * Math.cbrt(rnd()), s = Math.sqrt(1 - u * u);
+      e._pos = center.clone().add(new THREE.Vector3(s * Math.cos(t), u, s * Math.sin(t)).multiplyScalar(d));
+    });
+    return { name, center, members, spread, top: center.clone().add(new THREE.Vector3(0, spread + 8, 0)) };
+  });
+  return { clusters, R };
+}
+
+// Joins a constellation's stars with the shortest set of lines, like a star chart.
+function starChart(points) {
+  const n = points.length, edges = [];
+  if (n < 2) return edges;
+  const used = new Array(n).fill(false);
+  const best = points.map(p => ({ d: p.distanceTo(points[0]), from: 0 }));
+  used[0] = true;
+  for (let k = 1; k < n; k++) {
+    let j = -1;
+    for (let i = 0; i < n; i++) if (!used[i] && (j < 0 || best[i].d < best[j].d)) j = i;
+    used[j] = true;
+    edges.push([best[j].from, j]);
+    for (let i = 0; i < n; i++) {
+      if (used[i]) continue;
+      const d = points[i].distanceTo(points[j]);
+      if (d < best[i].d) best[i] = { d, from: j };
+    }
+  }
+  return edges;
+}
+
+function lineGeometry(pairs) {
+  const pos = new Float32Array(pairs.length * 6);
+  pairs.forEach(([a, b], i) => { a._pos.toArray(pos, i * 6); b._pos.toArray(pos, i * 6 + 3); });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(pairs.length * 6), 3));
+  return geo;
+}
+
+// ── BUILD ──
+let world = null;
+let focus = null;      // name of the constellation being looked at, or null for all
+let hovered = null;    // the star under the pointer
+let pinned = null;     // the star tapped on a touch screen
+let homeDistance = 320;
+let firstBuild = true;
+
+function build(all) {
+  const list = all.filter(e => !isBlank(e));
+  const shownNo = new Map(list.map(e => e.id).sort((a, b) => a - b).map((id, i) => [id, i + 1]));
+
+  if (world) {
+    world.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+    scene.remove(world.group);
+  }
+  el('labels').innerHTML = '';
+
+  const { clusters, R } = layout(list);
+  const group = new THREE.Group();
+  const stars = clusters.flatMap(c => c.members.map(e => ({ e, no: shownNo.get(e.id), cluster: c })));
+
+  const starPos = new Float32Array(stars.length * 3);
+  stars.forEach((s, i) => s.e._pos.toArray(starPos, i * 3));
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  starGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(stars.length * 3), 3));
+  group.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
+    size: 18, map: glow, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+  })));
+
+  const links = [];
+  clusters.forEach(c => starChart(c.members.map(e => e._pos)).forEach(([a, b]) => links.push([c.members[a], c.members[b], c])));
+  const byId = new Map(list.map(e => [e.id, e]));
+  const clusterOf = new Map(stars.map(s => [s.e.id, s.cluster]));
+  const xrefs = list.filter(e => e.xrefId && e.xrefId !== e.id && byId.has(e.xrefId)).map(e => [e, byId.get(e.xrefId)]);
+
+  const linkGeo = lineGeometry(links), xrefGeo = lineGeometry(xrefs);
+  group.add(new THREE.LineSegments(linkGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5, depthWrite: false })));
+  group.add(new THREE.LineSegments(xrefGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending })));
+  scene.add(group);
+
+  clusters.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'label';
+    b.textContent = c.name;
+    b.addEventListener('click', () => flyTo(c));
+    el('labels').appendChild(b);
+    c.label = b;
+  });
+
+  if (focus && !clusters.some(c => c.name === focus)) focus = null;
+  if (hovered) hovered = stars.find(s => s.e.id === hovered.e.id) || null;
+  if (pinned) pinned = stars.find(s => s.e.id === pinned.e.id) || null;
+  world = { group, stars, clusters, links, xrefs, clusterOf, starGeo, linkGeo, xrefGeo };
+
+  // Narrow (portrait) screens need the camera further back to fit the whole sky.
+  homeDistance = R * 2.2 * Math.max(1, 0.9 / camera.aspect);
+  if (firstBuild) {
+    firstBuild = false;
+    camera.position.set(0, R * 0.7, homeDistance);
+    controls.target.set(0, 0, 0);
+  }
+
+  el('stats').textContent = `${list.length} fragments · ${clusters.length} constellations · ${xrefs.length} cross-references`;
+  renderLegend();
+  paint();
+  showTip();
+}
+
+// Colors stars and lines: the constellation in focus is bright, the rest fade back.
+function paint() {
+  if (!world) return;
+  const lit = c => !focus || c.name === focus;
+  const sc = world.starGeo.attributes.color;
+  world.stars.forEach((s, i) => {
+    const col = (s === hovered || s === pinned) ? COLOR.hover : lit(s.cluster) ? COLOR.star : COLOR.starDim;
+    col.toArray(sc.array, i * 3);
+  });
+  sc.needsUpdate = true;
+  const lc = world.linkGeo.attributes.color;
+  world.links.forEach(([, , c], i) => {
+    const col = lit(c) ? COLOR.link : COLOR.linkDim;
+    col.toArray(lc.array, i * 6); col.toArray(lc.array, i * 6 + 3);
+  });
+  lc.needsUpdate = true;
+  const xc = world.xrefGeo.attributes.color;
+  world.xrefs.forEach(([a, b], i) => {
+    const on = lit(world.clusterOf.get(a.id)) || lit(world.clusterOf.get(b.id));
+    const col = on ? COLOR.xref : COLOR.xrefDim;
+    col.toArray(xc.array, i * 6); col.toArray(xc.array, i * 6 + 3);
+  });
+  xc.needsUpdate = true;
+  world.clusters.forEach(c => c.label.classList.toggle('dim', !lit(c)));
+}
+
+function renderLegend() {
+  const nav = el('legend');
+  nav.innerHTML = '<h2 class="mono">Constellations</h2>';
+  const add = (text, count, c) => {
+    const b = document.createElement('button');
+    b.innerHTML = `${escapeHtml(text)}<span class="count">${count}</span>`;
+    b.className = (c ? focus === c.name : focus === null) ? 'active' : '';
+    b.addEventListener('click', () => flyTo(c));
+    nav.appendChild(b);
+  };
+  add('All', world.stars.length, null);
+  world.clusters.forEach(c => add(c.name, c.members.length, c));
+}
+
+// ── CAMERA FLIGHTS ──
+let flight = null;
+function flyTo(c) {
+  focus = c ? c.name : null;
+  pinned = null;
+  renderLegend();
+  paint();
+  showTip();
+  controls.autoRotate = false;
+  const toT = c ? c.center.clone() : new THREE.Vector3();
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  const dist = c ? c.spread * 3.2 + 45 : homeDistance;
+  flight = {
+    t0: performance.now(), dur: 900,
+    fromT: controls.target.clone(), toT,
+    fromP: camera.position.clone(), toP: toT.clone().add(dir.multiplyScalar(dist))
+  };
+}
+
+// ── POINTING AT STARS ──
+const v = new THREE.Vector3();
+function toScreen(p) {
+  v.copy(p).project(camera);
+  return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, behind: v.z > 1 };
+}
+
+function starAt(x, y) {
+  if (!world) return null;
+  let best = null, bestD = 20 * 20;
+  world.stars.forEach(s => {
+    const p = toScreen(s.e._pos);
+    if (p.behind) return;
+    const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+    if (d < bestD) { bestD = d; best = s; }
+  });
+  return best;
+}
+
+function showTip() {
+  const s = pinned || hovered;
+  const tip = el('tip');
+  if (!s) { tip.hidden = true; return; }
+  const e = s.e;
+  const text = e.fragment || e.annotation || '';
+  const frag = text.length > 220 ? text.slice(0, 220).trim() + '…' : text;
+  tip.innerHTML = `
+    <div class="meta mono">No. ${String(s.no).padStart(3, '0')}${e.entrant ? ` · <b>${escapeHtml(e.entrant)}</b>` : ''}</div>
+    <p class="frag">${escapeHtml(frag)}</p>
+    <div class="cat mono">${escapeHtml(categoryOf(e))}</div>
+    <a href="index.html#entry-${e.id}">Open in the archive →</a>`;
+  tip.hidden = false;
+  placeTip();
+}
+
+function placeTip() {
+  const s = pinned || hovered;
+  const tip = el('tip');
+  if (!s || tip.hidden) return;
+  const p = toScreen(s.e._pos);
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = p.x + 16, y = p.y + 16;
+  if (x + w > innerWidth - 8) x = p.x - w - 16;
+  if (y + h > innerHeight - 8) y = p.y - h - 16;
+  tip.style.transform = `translate(${Math.max(8, x)}px, ${Math.max(8, y)}px)`;
+}
+
+const canvas = renderer.domElement;
+let down = null;
+canvas.addEventListener('pointermove', ev => {
+  if (ev.pointerType !== 'mouse' || pinned) return;
+  const s = starAt(ev.clientX, ev.clientY);
+  canvas.style.cursor = s ? 'pointer' : 'grab';
+  if (s !== hovered) { hovered = s; paint(); showTip(); }
+});
+canvas.addEventListener('pointerleave', () => { if (hovered && !pinned) { hovered = null; paint(); showTip(); } });
+canvas.addEventListener('pointerdown', ev => { down = { x: ev.clientX, y: ev.clientY }; });
+canvas.addEventListener('pointerup', ev => {
+  if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 6) return;   // a drag, not a click
+  const s = starAt(ev.clientX, ev.clientY);
+  if (s && ev.pointerType === 'mouse') { location.href = `index.html#entry-${s.e.id}`; return; }
+  // On touch screens a tap shows the star's card, which has the link to open it.
+  pinned = s;
+  hovered = null;
+  paint();
+  showTip();
+});
+
+// ── LABELS & ANIMATION ──
+function placeLabels() {
+  world.clusters.forEach(c => {
+    const p = toScreen(c.top);
+    const on = !p.behind && p.x > -100 && p.x < innerWidth + 100 && p.y > -40 && p.y < innerHeight + 40;
+    c.label.style.display = on ? '' : 'none';
+    if (on) c.label.style.transform = `translate(-50%, -100%) translate(${p.x}px, ${p.y}px)`;
+  });
+}
+
+function animate(now) {
+  requestAnimationFrame(animate);
+  if (flight) {
+    const k = Math.min(1, (now - flight.t0) / flight.dur);
+    const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+    controls.target.lerpVectors(flight.fromT, flight.toT, ease);
+    camera.position.lerpVectors(flight.fromP, flight.toP, ease);
+    if (k === 1) flight = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  if (world) { placeLabels(); placeTip(); }
+}
+requestAnimationFrame(animate);
+
+// ── LIVE DATA ──
+const db = getFirestore(initializeApp(firebaseConfig));
+onSnapshot(collection(db, 'entries'), snap => {
+  build(snap.docs.map(d => d.data()));
+}, err => {
+  el('stats').textContent = 'Could not load the archive: ' + err.message;
+});
+</script>
+</body>
+</html>

@@ -15,7 +15,10 @@ no exporting or importing JSON.
   Drive image, and a YouTube, Google Drive, or direct .mp4 / .mp3 link for video or audio. Drive files must
   be shared as *Anyone with the link*. Images show whole; click one to see it full size.
 - Your changes are saved immediately and show up for everyone else without a refresh.
-- **Export Archive (.json)** downloads a copy of the whole archive.
+- **✦ View Constellations** shows the archive as a 3D night sky: each entry is a star, grouped
+  by constellation, with cross-references drawn between them. Drag to turn it, scroll or pinch
+  to zoom, and click a star to open that entry.
+- **Export Archive (.json)**, at the bottom of the page, downloads a copy of the whole archive.
 
 ## For the teacher
 
@@ -101,8 +104,8 @@ Same as above, but type the entry number(s) as they show on the site **now** in 
 e.g. `7` or `3,5`. Those entries are put back exactly as they were in that backup.
 
 **Edit the archive's subtitle, "by" line, or introduction**
-Click the text at the top of the live site, type, then click elsewhere. It asks for the passcode
-and saves for everyone.
+Sign in as the teacher, then click the text at the top of the live site, type, and click
+elsewhere. It saves for everyone. Only the teacher passcode can change the header.
 
 **Change the page itself**
 Edit `index.html` on GitHub (link above) and click **Commit changes**. The live site updates in
@@ -114,7 +117,8 @@ history: open the `backups` folder → **History**, find the day, and download t
 from it by running `restore.js` locally (see *Scripts* below) with the file's path.
 
 ## How it works
-- [index.html](index.html) is the whole site, served by GitHub Pages.
+- [index.html](index.html) is the archive page and [constellations.html](constellations.html) the
+  3D view; both are served by GitHub Pages and read the same data.
 - Entries live in Firebase Firestore. The page reads and writes them directly.
 - [firestore.rules](firestore.rules) lets anyone read, but only lets a browser write after it
   has sent a passcode that matches a document in the `passcodes` collection. Changing the order

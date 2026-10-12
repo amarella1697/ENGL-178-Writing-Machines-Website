@@ -23,12 +23,15 @@ service cloud.firestore {
       allow delete: if teacher();
     }
 
-    // The order of entries (the "order" field of meta/archive) can only be changed by the teacher.
+    // The order of entries and the header text (the "order", "subtitle", "by" and "intro"
+    // fields of meta/archive) can only be changed by the teacher. Students' saves change
+    // only the entry numbering ("nextId").
+    function teacherOnly() { return ['order', 'subtitle', 'by', 'intro']; }
     match /meta/{doc} {
       allow read: if true;
-      allow create: if teacher() || (unlocked() && !('order' in request.resource.data));
+      allow create: if teacher() || (unlocked() && !request.resource.data.keys().hasAny(teacherOnly()));
       allow update: if teacher()
-        || (unlocked() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['order']));
+        || (unlocked() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(teacherOnly()));
       allow delete: if teacher();
     }
 
