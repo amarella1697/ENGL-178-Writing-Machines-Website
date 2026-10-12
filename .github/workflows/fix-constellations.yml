@@ -1,0 +1,23 @@
+name: One-time constellation rename
+
+on:
+  push:
+    paths:
+      - fix-constellations.js
+
+permissions:
+  contents: read
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node fix-constellations.js
+        env:
+          ARCHIVE_PASSCODE: ${{ secrets.ARCHIVE_PASSCODE }}
