@@ -216,6 +216,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import firebaseConfig from './firebase-config.js';
+import { categoryOf } from './constellation-names.js';
 
 // Each entry is a star. Stars in the same constellation cluster together and are joined
 // like a star chart; cross-references are drawn as brighter lines between stars.
@@ -233,7 +234,6 @@ const COLOR = {
 // Same rules as the archive page: emptied entries are hidden, numbers have no gaps.
 const CONTENT_FIELDS = ['entrant', 'fragment', 'imageUrl', 'videoUrl', 'annotation', 'source', 'sourceUrl'];
 const isBlank = e => CONTENT_FIELDS.every(f => !String(e[f] || '').trim());
-const categoryOf = e => e.category || 'Uncategorized';
 
 function escapeHtml(str) {
   const d = document.createElement('div');

@@ -675,6 +675,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { getFirestore, collection, doc, onSnapshot, setDoc, runTransaction, writeBatch } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import firebaseConfig from './firebase-config.js';
+import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.js';
 
 (function() {
   'use strict';
@@ -764,7 +765,7 @@ import firebaseConfig from './firebase-config.js';
   function renderConstellations() {
     const counts = {};
     entries.forEach(e => {
-      const cat = e.category || 'Uncategorized';
+      const cat = categoryOf(e);
       counts[cat] = (counts[cat] || 0) + 1;
     });
     const cats = Object.keys(counts).sort((a,b) => a.localeCompare(b));
@@ -789,7 +790,9 @@ import firebaseConfig from './firebase-config.js';
 
     // datalist
     const dl = el('categoryOptions');
-    dl.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+    // Suggest the class's constellations, plus any others already in use.
+    const suggestions = [...new Set([...CONSTELLATIONS, ...cats.filter(c => c !== 'Uncategorized')])];
+    dl.innerHTML = suggestions.map(c => `<option value="${escapeHtml(c)}">`).join('');
   }
 
   // ── CONTRIBUTOR FILTER ──
@@ -819,9 +822,9 @@ import firebaseConfig from './firebase-config.js';
     if (arranging) return entries.slice();
     const words = el('searchInput').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return entries.filter(e => {
-      if (activeTag !== null && (e.category || 'Uncategorized') !== activeTag) return false;
+      if (activeTag !== null && categoryOf(e) !== activeTag) return false;
       if (activeEntrant && nameKey(e.entrant) !== activeEntrant) return false;
-      const hay = [e.fragment, e.annotation, e.source, e.category, e.entrant].join(' ').toLowerCase();
+      const hay = [e.fragment, e.annotation, e.source, categoryOf(e), e.entrant].join(' ').toLowerCase();
       return words.every(w => hay.includes(w));
     });
   }
@@ -918,7 +921,7 @@ import firebaseConfig from './firebase-config.js';
          </div>`;
     return `
       <article class="card" data-id="${e.id}" ${arranging ? 'draggable="true"' : ''}>
-        <div class="stamp-corner" data-cat="${escapeHtml(e.category || 'Uncategorized')}" title="Show this constellation">${escapeHtml(e.category || 'Uncategorized')}</div>
+        <div class="stamp-corner" data-cat="${escapeHtml(categoryOf(e))}" title="Show this constellation">${escapeHtml(categoryOf(e))}</div>
         <div class="card-meta">
           <span>NO. ${no(e.id)}</span>
           ${e.entrant ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(e.entrant))}" title="Show all entries by ${escapeHtml(e.entrant)}">${escapeHtml(e.entrant)}</button>` : ''}
@@ -1173,7 +1176,7 @@ import firebaseConfig from './firebase-config.js';
       annotation: el('fAnnotation').value.trim(),
       source: el('fSource').value.trim(),
       sourceUrl: el('fSourceUrl').value.trim(),
-      category: el('fCategory').value.trim() || 'Uncategorized',
+      category: officialName(el('fCategory').value) || 'Uncategorized',
       xrefId: el('fXref').value ? parseInt(el('fXref').value, 10) : null
     };
     if (editingId && isBlank(data)) {
