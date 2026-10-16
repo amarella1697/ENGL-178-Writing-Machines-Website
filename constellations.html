@@ -216,7 +216,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import firebaseConfig from './firebase-config.js';
-import { categoryOf } from './constellation-names.js';
+import { CONSTELLATIONS, categoryOf } from './constellation-names.js';
 
 // Each entry is a star. Stars in the same constellation cluster together and are joined
 // like a star chart; cross-references are drawn as brighter lines between stars.
@@ -307,7 +307,13 @@ const glow = glowTexture();
 })();
 
 // ── LAYOUT ──
-// Positions come from each entry's id, so a star stays in the same place between visits.
+// Each star is pulled toward its constellation's centre and pushes the other stars in it
+// away, so a constellation spreads out as it grows. Stars keep their place between updates:
+// a new entry appears at its constellation's centre and the others drift aside to make room.
+const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PULL = 0.01, PUSH = 110, DAMP = 0.86, SPIN = 0.0015, STEP = 1000 / 60;
+const sizeFor = n => Math.cbrt(PUSH * n / PULL);   // about how wide n stars settle
+
 function seeded(seed) {
   return () => {
     seed |= 0; seed = seed + 0x6D2B79F5 | 0;
@@ -317,6 +323,16 @@ function seeded(seed) {
   };
 }
 
+function hash(str) {
+  let h = 2166136261;
+  for (const ch of str) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+
+const bodies = new Map();   // entry id → its star's position and velocity, kept across updates
+const homes = new Map();    // constellation name → its centre and the axis it slowly turns on
+let simTime = 0;
+
 function layout(list) {
   const groups = new Map();
   list.forEach(e => {
@@ -325,23 +341,82 @@ function layout(list) {
     groups.get(c).push(e);
   });
   const names = [...groups.keys()].sort((a, b) => groups.get(b).length - groups.get(a).length || a.localeCompare(b));
-  const R = 70 + 24 * Math.sqrt(names.length);
-  const clusters = names.map((name, i) => {
+  // Homes go in a fixed order, so one constellation outgrowing another doesn't swap their places.
+  const rank = name => { const i = CONSTELLATIONS.indexOf(name); return i < 0 ? CONSTELLATIONS.length : i; };
+  const order = [...names].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  const n = names.length;
+  const widest = sizeFor(Math.max(1, ...names.map(name => groups.get(name).length)));
+  // Far enough apart that neighbouring constellations leave a wide gap of empty sky.
+  const R = n < 2 ? 0 : Math.max(170, (2 * widest + 110) * Math.sqrt(n / (4 * Math.PI)) / 0.8);
+  const clusters = names.map(name => {
     // Spread the constellations evenly over a slightly flattened sphere.
-    const n = names.length;
+    const i = order.indexOf(name);
     const y = n === 1 ? 0 : 1 - (i / (n - 1)) * 2;
     const r = Math.sqrt(1 - y * y), phi = i * Math.PI * (3 - Math.sqrt(5));
-    const center = new THREE.Vector3(Math.cos(phi) * r, y * 0.6, Math.sin(phi) * r).multiplyScalar(R);
+    const home = new THREE.Vector3(Math.cos(phi) * r, y * 0.75, Math.sin(phi) * r).multiplyScalar(R);
+    if (!homes.has(name)) {
+      const rnd = seeded(hash(name));
+      const axis = new THREE.Vector3(rnd() - 0.5, 2, rnd() - 0.5).normalize().multiplyScalar(rnd() < 0.5 ? -1 : 1);
+      homes.set(name, { center: home.clone(), axis, phase: rnd() * Math.PI * 2 });
+    }
+    const { center, axis, phase } = homes.get(name);
     const members = groups.get(name).sort((a, b) => a.id - b.id);
-    const spread = 8 + 6 * Math.sqrt(members.length);
     members.forEach(e => {
-      const rnd = seeded(e.id * 7919);
-      const u = rnd() * 2 - 1, t = rnd() * Math.PI * 2, d = spread * Math.cbrt(rnd()), s = Math.sqrt(1 - u * u);
-      e._pos = center.clone().add(new THREE.Vector3(s * Math.cos(t), u, s * Math.sin(t)).multiplyScalar(d));
+      if (!bodies.has(e.id)) {
+        const rnd = seeded(e.id * 7919);
+        bodies.set(e.id, {
+          p: new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(8).add(center),
+          v: new THREE.Vector3(), a: new THREE.Vector3(),
+          drift: [rnd(), rnd(), rnd()].map(x => x * Math.PI * 2)
+        });
+      }
+      e._pos = bodies.get(e.id).p;
     });
-    return { name, center, members, spread, top: center.clone().add(new THREE.Vector3(0, spread + 8, 0)) };
+    return { name, home, center, axis, phase, members, radius: sizeFor(members.length), top: new THREE.Vector3() };
   });
-  return { clusters, R };
+  const ids = new Set(list.map(e => e.id));
+  for (const id of bodies.keys()) if (!ids.has(id)) bodies.delete(id);
+  for (const name of homes.keys()) if (!groups.has(name)) homes.delete(name);
+  return { clusters, R, widest };
+}
+
+// One tick of the sky: centres glide toward their homes, stars settle, drift and turn.
+const tmp = new THREE.Vector3(), d = new THREE.Vector3();
+function step(clusters) {
+  simTime += STEP;
+  clusters.forEach(c => {
+    tmp.copy(c.home);
+    if (!STILL) tmp.y += Math.sin(simTime * 0.0003 + c.phase) * 8;
+    d.copy(c.center);
+    c.center.lerp(tmp, STILL ? 1 : 0.015);
+    // The camera follows the constellation it is looking at.
+    if (c.name === focus && !flight) { d.subVectors(c.center, d); controls.target.add(d); camera.position.add(d); }
+
+    const m = c.members.map(e => bodies.get(e.id));
+    m.forEach(b => b.a.subVectors(c.center, b.p).multiplyScalar(PULL));
+    for (let i = 0; i < m.length; i++) {
+      for (let j = i + 1; j < m.length; j++) {
+        d.subVectors(m[i].p, m[j].p);
+        const r2 = Math.max(d.lengthSq(), 4);
+        d.multiplyScalar(PUSH / (r2 * Math.sqrt(r2)));
+        m[i].a.add(d);
+        m[j].a.sub(d);
+      }
+    }
+    let far = 0;
+    m.forEach(b => {
+      if (!STILL) {
+        b.a.x += 0.04 * Math.sin(simTime * 0.0007 + b.drift[0]);
+        b.a.y += 0.04 * Math.sin(simTime * 0.0005 + b.drift[1]);
+        b.a.z += 0.04 * Math.sin(simTime * 0.0006 + b.drift[2]);
+      }
+      b.v.add(b.a.clampLength(0, 3)).multiplyScalar(DAMP);
+      b.p.add(b.v);
+      if (!STILL) b.p.add(tmp.subVectors(b.p, c.center).cross(c.axis).multiplyScalar(SPIN));
+      far = Math.max(far, b.p.distanceTo(c.center));
+    });
+    c.radius += (far - c.radius) * 0.05;
+  });
 }
 
 // Joins a constellation's stars with the shortest set of lines, like a star chart.
@@ -365,13 +440,30 @@ function starChart(points) {
   return edges;
 }
 
+function chartLinks(clusters) {
+  const links = [];
+  clusters.forEach(c => starChart(c.members.map(e => e._pos)).forEach(([a, b]) => links.push([c.members[a], c.members[b], c])));
+  return links;
+}
+
 function lineGeometry(pairs) {
-  const pos = new Float32Array(pairs.length * 6);
-  pairs.forEach(([a, b], i) => { a._pos.toArray(pos, i * 6); b._pos.toArray(pos, i * 6 + 3); });
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pairs.length * 6), 3));
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(pairs.length * 6), 3));
   return geo;
+}
+
+// Copies the stars' current positions into what is drawn.
+function sync() {
+  const sp = world.starGeo.attributes.position;
+  world.stars.forEach((s, i) => s.e._pos.toArray(sp.array, i * 3));
+  sp.needsUpdate = true;
+  [[world.linkGeo, world.links], [world.xrefGeo, world.xrefs]].forEach(([geo, pairs]) => {
+    const lp = geo.attributes.position;
+    pairs.forEach(([a, b], i) => { a._pos.toArray(lp.array, i * 6); b._pos.toArray(lp.array, i * 6 + 3); });
+    lp.needsUpdate = true;
+  });
+  world.clusters.forEach(c => { c.top.copy(c.center).y += c.radius + 14; });
 }
 
 // ── BUILD ──
@@ -392,21 +484,20 @@ function build(all) {
   }
   el('labels').innerHTML = '';
 
-  const { clusters, R } = layout(list);
+  const { clusters, R, widest } = layout(list);
+  // The first time, let the sky settle before showing it rather than bursting out of the centres.
+  if (firstBuild || STILL) for (let k = 0; k < 400; k++) step(clusters);
   const group = new THREE.Group();
   const stars = clusters.flatMap(c => c.members.map(e => ({ e, no: shownNo.get(e.id), cluster: c })));
 
-  const starPos = new Float32Array(stars.length * 3);
-  stars.forEach((s, i) => s.e._pos.toArray(starPos, i * 3));
   const starGeo = new THREE.BufferGeometry();
-  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(stars.length * 3), 3));
   starGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(stars.length * 3), 3));
   group.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
     size: 18, map: glow, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   })));
 
-  const links = [];
-  clusters.forEach(c => starChart(c.members.map(e => e._pos)).forEach(([a, b]) => links.push([c.members[a], c.members[b], c])));
+  const links = chartLinks(clusters);
   const byId = new Map(list.map(e => [e.id, e]));
   const clusterOf = new Map(stars.map(s => [s.e.id, s.cluster]));
   const xrefs = list.filter(e => e.xrefId && e.xrefId !== e.id && byId.has(e.xrefId)).map(e => [e, byId.get(e.xrefId)]);
@@ -414,6 +505,8 @@ function build(all) {
   const linkGeo = lineGeometry(links), xrefGeo = lineGeometry(xrefs);
   group.add(new THREE.LineSegments(linkGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5, depthWrite: false })));
   group.add(new THREE.LineSegments(xrefGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending })));
+  // The stars move every frame, so their starting bounds can't be used to skip drawing them.
+  group.children.forEach(o => { o.frustumCulled = false; });
   scene.add(group);
 
   clusters.forEach(c => {
@@ -428,13 +521,17 @@ function build(all) {
   if (focus && !clusters.some(c => c.name === focus)) focus = null;
   if (hovered) hovered = stars.find(s => s.e.id === hovered.e.id) || null;
   if (pinned) pinned = stars.find(s => s.e.id === pinned.e.id) || null;
-  world = { group, stars, clusters, links, xrefs, clusterOf, starGeo, linkGeo, xrefGeo };
+  // While stars are still finding room, redraw the star-chart lines every half second.
+  world = { group, stars, clusters, links, xrefs, clusterOf, starGeo, linkGeo, xrefGeo, relinkUntil: simTime + 6000, nextRelink: simTime };
+  sync();
 
   // Narrow (portrait) screens need the camera further back to fit the whole sky.
-  homeDistance = R * 2.2 * Math.max(1, 0.9 / camera.aspect);
+  homeDistance = Math.max(220, (R + widest) * 2.1) * Math.max(1, 0.9 / camera.aspect);
+  controls.maxDistance = homeDistance * 2.5;
+  scene.fog.density = 0.55 / (homeDistance + R + widest);
   if (firstBuild) {
     firstBuild = false;
-    camera.position.set(0, R * 0.7, homeDistance);
+    camera.position.set(0, homeDistance * 0.3, homeDistance);
     controls.target.set(0, 0, 0);
   }
 
@@ -495,7 +592,7 @@ function flyTo(c) {
   controls.autoRotate = false;
   const toT = c ? c.center.clone() : new THREE.Vector3();
   const dir = camera.position.clone().sub(controls.target).normalize();
-  const dist = c ? c.spread * 3.2 + 45 : homeDistance;
+  const dist = c ? Math.max(c.radius, 10) * 3.2 + 45 : homeDistance;
   flight = {
     t0: performance.now(), dur: 900,
     fromT: controls.target.clone(), toT,
@@ -581,8 +678,24 @@ function placeLabels() {
   });
 }
 
+let last = performance.now(), lag = 0;
 function animate(now) {
   requestAnimationFrame(animate);
+  if (world) {
+    lag = Math.min(lag + now - last, STEP * 4);
+    while (lag >= STEP) { step(world.clusters); lag -= STEP; }
+    if (simTime < world.relinkUntil && simTime >= world.nextRelink) {
+      world.links = chartLinks(world.clusters);
+      world.nextRelink = simTime + 500;
+    }
+    sync();
+  }
+  last = now;
+  // While nobody is steering, the view eases back to keep the whole sky in frame as it grows.
+  if (controls.autoRotate && !focus && !flight) {
+    const dist = camera.position.distanceTo(controls.target);
+    camera.position.sub(controls.target).setLength(dist + (homeDistance - dist) * 0.01).add(controls.target);
+  }
   if (flight) {
     const k = Math.min(1, (now - flight.t0) / flight.dur);
     const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
