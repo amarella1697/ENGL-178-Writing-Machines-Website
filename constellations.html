@@ -311,7 +311,7 @@ const glow = glowTexture();
 // away, so a constellation spreads out as it grows. Stars keep their place between updates:
 // a new entry appears at its constellation's centre and the others drift aside to make room.
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const PULL = 0.01, PUSH = 110, DAMP = 0.86, SPIN = 0.0015, STEP = 1000 / 60;
+const PULL = 0.01, PUSH = 110, DAMP = 0.86, STEP = 1000 / 60;
 const sizeFor = n => Math.cbrt(PUSH * n / PULL);   // about how wide n stars settle
 
 function seeded(seed) {
@@ -323,14 +323,8 @@ function seeded(seed) {
   };
 }
 
-function hash(str) {
-  let h = 2166136261;
-  for (const ch of str) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-  return h >>> 0;
-}
-
 const bodies = new Map();   // entry id → its star's position and velocity, kept across updates
-const homes = new Map();    // constellation name → its centre and the axis it slowly turns on
+const homes = new Map();    // constellation name → its centre, kept across updates
 let simTime = 0;
 
 function layout(list) {
@@ -354,25 +348,20 @@ function layout(list) {
     const y = n === 1 ? 0 : 1 - (i / (n - 1)) * 2;
     const r = Math.sqrt(1 - y * y), phi = i * Math.PI * (3 - Math.sqrt(5));
     const home = new THREE.Vector3(Math.cos(phi) * r, y * 0.75, Math.sin(phi) * r).multiplyScalar(R);
-    if (!homes.has(name)) {
-      const rnd = seeded(hash(name));
-      const axis = new THREE.Vector3(rnd() - 0.5, 2, rnd() - 0.5).normalize().multiplyScalar(rnd() < 0.5 ? -1 : 1);
-      homes.set(name, { center: home.clone(), axis, phase: rnd() * Math.PI * 2 });
-    }
-    const { center, axis, phase } = homes.get(name);
+    if (!homes.has(name)) homes.set(name, home.clone());
+    const center = homes.get(name);
     const members = groups.get(name).sort((a, b) => a.id - b.id);
     members.forEach(e => {
       if (!bodies.has(e.id)) {
         const rnd = seeded(e.id * 7919);
         bodies.set(e.id, {
           p: new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(8).add(center),
-          v: new THREE.Vector3(), a: new THREE.Vector3(),
-          drift: [rnd(), rnd(), rnd()].map(x => x * Math.PI * 2)
+          v: new THREE.Vector3(), a: new THREE.Vector3()
         });
       }
       e._pos = bodies.get(e.id).p;
     });
-    return { name, home, center, axis, phase, members, radius: sizeFor(members.length), top: new THREE.Vector3() };
+    return { name, home, center, members, radius: sizeFor(members.length), top: new THREE.Vector3() };
   });
   const ids = new Set(list.map(e => e.id));
   for (const id of bodies.keys()) if (!ids.has(id)) bodies.delete(id);
@@ -380,15 +369,13 @@ function layout(list) {
   return { clusters, R, widest };
 }
 
-// One tick of the sky: centres glide toward their homes, stars settle, drift and turn.
-const tmp = new THREE.Vector3(), d = new THREE.Vector3();
+// One tick of the sky: centres glide toward their homes and stars settle, then stay still.
+const d = new THREE.Vector3();
 function step(clusters) {
   simTime += STEP;
   clusters.forEach(c => {
-    tmp.copy(c.home);
-    if (!STILL) tmp.y += Math.sin(simTime * 0.0003 + c.phase) * 8;
     d.copy(c.center);
-    c.center.lerp(tmp, STILL ? 1 : 0.015);
+    c.center.lerp(c.home, STILL ? 1 : 0.015);
     // The camera follows the constellation it is looking at.
     if (c.name === focus && !flight) { d.subVectors(c.center, d); controls.target.add(d); camera.position.add(d); }
 
@@ -405,14 +392,8 @@ function step(clusters) {
     }
     let far = 0;
     m.forEach(b => {
-      if (!STILL) {
-        b.a.x += 0.04 * Math.sin(simTime * 0.0007 + b.drift[0]);
-        b.a.y += 0.04 * Math.sin(simTime * 0.0005 + b.drift[1]);
-        b.a.z += 0.04 * Math.sin(simTime * 0.0006 + b.drift[2]);
-      }
       b.v.add(b.a.clampLength(0, 3)).multiplyScalar(DAMP);
       b.p.add(b.v);
-      if (!STILL) b.p.add(tmp.subVectors(b.p, c.center).cross(c.axis).multiplyScalar(SPIN));
       far = Math.max(far, b.p.distanceTo(c.center));
     });
     c.radius += (far - c.radius) * 0.05;
