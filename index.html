@@ -590,7 +590,7 @@
 
     <div class="field">
       <label for="fEntrant">Entered by</label>
-      <input type="text" id="fEntrant" placeholder="Student name">
+      <select id="fEntrant"></select>
     </div>
 
     <div class="field">
@@ -632,8 +632,8 @@
     </div>
 
     <div class="field">
-      <label for="fCategory">Constellation <span class="hint" style="display:inline">(new or existing)</span></label>
-      <input type="text" id="fCategory" list="categoryOptions" placeholder="e.g. Things That Work Without Understanding">
+      <label for="fCategory">Constellation <span class="hint" style="display:inline">(required — new or existing)</span></label>
+      <input type="text" id="fCategory" list="categoryOptions" placeholder="Pick one from the list, or name a new one" required>
       <datalist id="categoryOptions"></datalist>
     </div>
 
@@ -676,6 +676,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gsta
 import { getFirestore, collection, doc, onSnapshot, setDoc, runTransaction, writeBatch } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import firebaseConfig from './firebase-config.js';
 import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.js';
+import { CLASS_NAMES, className, entrantOf } from './class-names.js';
 
 (function() {
   'use strict';
@@ -709,6 +710,8 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
   const num = id => String(id).padStart(3, '0');
   const no = id => num(shownNo.get(id) || id);
   const nameKey = name => (name || '').trim().toLowerCase();
+  // Every entry needs a real constellation, so "Uncategorized" doesn't count as one.
+  const isUncategorized = name => /^uncategori[sz]ed$/i.test(String(name || '').trim());
 
   // ── PASSCODE ──
   // Writes are allowed only from browsers that have entered the class passcode
@@ -799,9 +802,9 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
   function renderEntrantFilter() {
     const people = new Map();   // name key -> { name, count }
     entries.forEach(e => {
-      const key = nameKey(e.entrant);
+      const key = nameKey(entrantOf(e));
       if (!key) return;
-      if (!people.has(key)) people.set(key, { name: e.entrant.trim(), count: 0 });
+      if (!people.has(key)) people.set(key, { name: entrantOf(e), count: 0 });
       people.get(key).count++;
     });
     if (activeEntrant && !people.has(activeEntrant)) activeEntrant = null;
@@ -823,8 +826,8 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
     const words = el('searchInput').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return entries.filter(e => {
       if (activeTag !== null && categoryOf(e) !== activeTag) return false;
-      if (activeEntrant && nameKey(e.entrant) !== activeEntrant) return false;
-      const hay = [e.fragment, e.annotation, e.source, categoryOf(e), e.entrant].join(' ').toLowerCase();
+      if (activeEntrant && nameKey(entrantOf(e)) !== activeEntrant) return false;
+      const hay = [e.fragment, e.annotation, e.source, categoryOf(e), e.entrant, entrantOf(e)].join(' ').toLowerCase();
       return words.every(w => hay.includes(w));
     });
   }
@@ -924,7 +927,7 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
         <div class="stamp-corner" data-cat="${escapeHtml(categoryOf(e))}" title="Show this constellation">${escapeHtml(categoryOf(e))}</div>
         <div class="card-meta">
           <span>NO. ${no(e.id)}</span>
-          ${e.entrant ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(e.entrant))}" title="Show all entries by ${escapeHtml(e.entrant)}">${escapeHtml(e.entrant)}</button>` : ''}
+          ${entrantOf(e) ? `<button class="entrant" data-entrant="${escapeHtml(nameKey(entrantOf(e)))}" title="Show all entries by ${escapeHtml(entrantOf(e))}">${escapeHtml(entrantOf(e))}</button>` : ''}
           ${e.source ? `<span>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">${escapeHtml(e.source)}</a>` : escapeHtml(e.source)}</span>` : ''}
         </div>
         <p class="card-fragment${e.isQuote ? ' is-quote' : ''}">${escapeHtml(e.fragment)}</p>
@@ -1139,7 +1142,12 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
 
     el('formTitle').textContent = entry ? 'Edit Entry' : 'New Entry';
     el('formCardNum').textContent = entry ? no(entry.id) : num(entries.length + 1);
-    el('fEntrant').value = entry ? (entry.entrant || '') : '';
+    // An older entry signed with a name not on the list keeps that name as a choice.
+    const signed = entry ? entrantOf(entry) : '';
+    const names = signed && !CLASS_NAMES.includes(signed) ? [...CLASS_NAMES, signed] : CLASS_NAMES;
+    el('fEntrant').innerHTML = '<option value="">— choose your name —</option>' +
+      names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    el('fEntrant').value = signed;
     el('fFragment').value = entry ? entry.fragment : '';
     el('fIsQuote').checked = entry ? !!entry.isQuote : false;
     el('fImageUrl').value = entry ? (entry.imageUrl || '') : '';
@@ -1147,7 +1155,7 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
     el('fAnnotation').value = entry ? (entry.annotation || '') : '';
     el('fSource').value = entry ? (entry.source || '') : '';
     el('fSourceUrl').value = entry ? (entry.sourceUrl || '') : '';
-    el('fCategory').value = entry ? (entry.category || '') : '';
+    el('fCategory').value = entry && !isUncategorized(entry.category) ? (entry.category || '') : '';
     el('formError').textContent = '';
     renderImagePreview();
 
@@ -1168,7 +1176,7 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
   async function saveEntry() {
     const fragment = el('fFragment').value.trim();
     const data = {
-      entrant: el('fEntrant').value.trim(),
+      entrant: className(el('fEntrant').value),
       fragment,
       isQuote: el('fIsQuote').checked,
       imageUrl: el('fImageUrl').value.trim(),
@@ -1176,13 +1184,17 @@ import { CONSTELLATIONS, officialName, categoryOf } from './constellation-names.
       annotation: el('fAnnotation').value.trim(),
       source: el('fSource').value.trim(),
       sourceUrl: el('fSourceUrl').value.trim(),
-      category: officialName(el('fCategory').value) || 'Uncategorized',
+      category: isUncategorized(el('fCategory').value) ? '' : officialName(el('fCategory').value),
       xrefId: el('fXref').value ? parseInt(el('fXref').value, 10) : null
     };
     if (editingId && isBlank(data)) {
       if (!confirm('Every field is empty, so this entry will be removed from the site. It can be brought back from a nightly backup.\n\nRemove it?')) return;
     } else if (!fragment) {
       el('formError').textContent = 'The fragment cannot be empty. (To remove an entry, clear every field.)';
+      return;
+    } else if (!data.category) {
+      el('formError').textContent = 'Choose a constellation for this entry.';
+      el('fCategory').focus();
       return;
     }
     el('btnSave').disabled = true;

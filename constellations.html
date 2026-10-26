@@ -217,6 +217,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import firebaseConfig from './firebase-config.js';
 import { CONSTELLATIONS, categoryOf } from './constellation-names.js';
+import { entrantOf } from './class-names.js';
 
 // Each entry is a star. Stars in the same constellation cluster together and are joined
 // like a star chart; cross-references are drawn as brighter lines between stars.
@@ -618,7 +619,7 @@ function showTip() {
   const text = e.fragment || e.annotation || '';
   const frag = text.length > 220 ? text.slice(0, 220).trim() + '…' : text;
   tip.innerHTML = `
-    <div class="meta mono">No. ${String(s.no).padStart(3, '0')}${e.entrant ? ` · <b>${escapeHtml(e.entrant)}</b>` : ''}</div>
+    <div class="meta mono">No. ${String(s.no).padStart(3, '0')}${entrantOf(e) ? ` · <b>${escapeHtml(entrantOf(e))}</b>` : ''}</div>
     <p class="frag">${escapeHtml(frag)}</p>
     <div class="cat mono">${escapeHtml(categoryOf(e))}</div>
     <a href="index.html#entry-${e.id}">Open in the archive →</a>`;
