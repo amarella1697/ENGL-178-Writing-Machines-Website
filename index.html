@@ -589,7 +589,7 @@
     <div class="form-sub">FRAGMENT NO. <span id="formCardNum">—</span></div>
 
     <div class="field">
-      <label for="fEntrant">Entered by</label>
+      <label for="fEntrant">Entered by <span class="hint" style="display:inline">(required)</span></label>
       <select id="fEntrant"></select>
     </div>
 
@@ -632,7 +632,7 @@
     </div>
 
     <div class="field">
-      <label for="fCategory">Constellation <span class="hint" style="display:inline">(required — new or existing)</span></label>
+      <label for="fCategory">Constellation <span class="hint" style="display:inline">(required — pick one or name a new one)</span></label>
       <input type="text" id="fCategory" list="categoryOptions" placeholder="Pick one from the list, or name a new one" required>
       <datalist id="categoryOptions"></datalist>
     </div>
@@ -1191,6 +1191,10 @@ import { CLASS_NAMES, className, entrantOf } from './class-names.js';
       if (!confirm('Every field is empty, so this entry will be removed from the site. It can be brought back from a nightly backup.\n\nRemove it?')) return;
     } else if (!fragment) {
       el('formError').textContent = 'The fragment cannot be empty. (To remove an entry, clear every field.)';
+      return;
+    } else if (!data.entrant) {
+      el('formError').textContent = 'Choose your name.';
+      el('fEntrant').focus();
       return;
     } else if (!data.category) {
       el('formError').textContent = 'Choose a constellation for this entry.';
