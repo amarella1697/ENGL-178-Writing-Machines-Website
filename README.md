@@ -15,9 +15,10 @@ no exporting or importing JSON.
   Drive image, and a YouTube, Google Drive, or direct .mp4 / .mp3 link for video or audio. Drive files must
   be shared as *Anyone with the link*. Images show whole; click one to see it full size.
 - Your changes are saved immediately and show up for everyone else without a refresh.
-- **✦ View Constellations** shows the archive as a 3D night sky: each entry is a star, grouped
-  by constellation, with cross-references drawn between them. Drag to turn it, scroll or pinch
-  to zoom, and click a star to open that entry.
+- **✦ View Constellations** shows the archive as a star chart: each entry is a star, and each
+  constellation is a figure with its own patch of sky. Drag to move around, scroll or pinch to
+  zoom, and click a star to open that entry. Pick a constellation to fly to it, and use
+  **Show cross-references** to draw the links between entries.
 - **Export Archive (.json)**, at the bottom of the page, downloads a copy of the whole archive.
 
 ## For the teacher
@@ -118,7 +119,7 @@ from it by running `restore.js` locally (see *Scripts* below) with the file's pa
 
 ## How it works
 - [index.html](index.html) is the archive page and [constellations.html](constellations.html) the
-  3D view; both are served by GitHub Pages and read the same data.
+  star chart; both are served by GitHub Pages and read the same data.
 - Entries live in Firebase Firestore. The page reads and writes them directly.
 - [firestore.rules](firestore.rules) lets anyone read, but only lets a browser write after it
   has sent a passcode that matches a document in the `passcodes` collection. Changing the order

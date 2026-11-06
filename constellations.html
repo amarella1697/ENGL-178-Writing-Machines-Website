@@ -7,6 +7,7 @@
 <style>
   :root {
     --sky: #0F0F1D;
+    --rail: #131325;
     --ink: #1A1A2E;
     --paper: #E6E7E8;
     --paper-raised: #F1F2F2;
@@ -14,7 +15,9 @@
     --stamp: #C6488C;
     --stamp-soft: #DFA0C2;
     --sage: #00A896;
+    --xref: #19D3BE;
     --muted: #9A9AB3;
+    --line: #2A2A40;
   }
 
   * { box-sizing: border-box; }
@@ -28,7 +31,12 @@
     font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
   }
 
-  #sky { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  body {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
+  }
 
   .mono {
     font-family: 'Courier New', Courier, monospace;
@@ -36,104 +44,124 @@
     text-transform: uppercase;
   }
 
-  /* ── TOP BAR ── */
-  .top {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    padding: 18px 20px 28px;
+  /* ── RAIL ── */
+  .rail {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    background: linear-gradient(var(--sky) 40%, transparent);
-    pointer-events: none;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--rail);
+    border-right: 1px solid var(--line);
   }
-  .top > * { pointer-events: auto; }
-  h1 { font-weight: 400; font-size: clamp(22px, 3.4vw, 34px); margin: 0; }
-  .stats { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  .rail-head { padding: 20px 20px 16px; }
+  h1 { font-weight: 400; font-size: 30px; margin: 16px 0 0; }
+  .stats { font-size: 10px; line-height: 1.7; color: var(--muted); margin-top: 8px; }
+  .stats span { display: block; }
 
   a.back {
+    display: inline-block;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--paper);
-    border: 1px solid var(--paper);
+    border: 1px solid #55556F;
     border-radius: 2px;
-    padding: 9px 14px;
+    padding: 7px 10px;
     text-decoration: none;
     white-space: nowrap;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
-  a.back:hover { background: var(--paper); color: var(--ink); }
+  a.back:hover { background: var(--paper); border-color: var(--paper); color: var(--ink); }
   a.back:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
 
   /* ── LEGEND ── */
   .legend {
-    position: fixed;
-    left: 20px;
-    bottom: 20px;
-    max-height: calc(100vh - 160px);
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: #3A3A55 transparent;
+    padding: 4px 0 12px;
+    border-top: 1px solid var(--line);
   }
-  .legend h2 { font-size: 10px; color: var(--muted); margin: 0 0 4px; font-weight: 400; }
   .legend button {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
     text-align: left;
-    background: rgba(15, 15, 29, 0.7);
-    border: 1px solid #3A3A55;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
     color: var(--paper);
-    padding: 5px 12px;
-    border-radius: 20px;
+    padding: 8px 20px 8px 17px;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, color 0.15s;
   }
-  .legend button:hover { border-color: var(--stamp-soft); }
-  .legend button.active { background: var(--stamp); border-color: var(--stamp); font-weight: bold; }
-  .legend button:focus-visible { outline: 2px solid var(--stamp-soft); outline-offset: 2px; }
-  .legend .count { opacity: 0.6; margin-left: 6px; font-size: 10px; }
+  .legend button:hover { background: rgba(255, 255, 255, 0.05); }
+  .legend button.active { border-left-color: var(--stamp); background: rgba(198, 72, 140, 0.14); color: #fff; }
+  .legend button:focus-visible { outline: 2px solid var(--stamp-soft); outline-offset: -2px; }
+  .legend .count { font-family: 'Courier New', Courier, monospace; font-size: 12px; color: var(--muted); }
+  .legend button.active .count { color: var(--stamp-soft); }
 
-  .hint {
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
+  .rail-foot {
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--line);
     font-size: 10px;
     color: var(--muted);
-    text-align: right;
     line-height: 1.8;
   }
-  .hint .key { display: inline-block; width: 18px; height: 2px; vertical-align: middle; margin-right: 6px; }
-
-  /* ── LABELS & TOOLTIP ── */
-  .label {
-    position: fixed;
-    top: 0; left: 0;
-    font-family: 'Courier New', Courier, monospace;
+  .toggle {
+    display: block;
+    width: 100%;
     font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--xref);
+    background: none;
+    border: 1px solid var(--xref);
+    border-radius: 2px;
+    padding: 8px 10px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .toggle:hover { background: rgba(25, 211, 190, 0.12); }
+  .toggle.on { background: var(--xref); color: var(--sky); }
+  .toggle:focus-visible { outline: 2px solid var(--stamp-soft); outline-offset: 2px; }
+  .key-line { display: inline-block; width: 18px; height: 2px; vertical-align: middle; margin-right: 8px; }
+  .hint { margin-top: 8px; }
+
+  /* ── SKY ── */
+  .stage { position: relative; overflow: hidden; min-width: 0; min-height: 0; }
+  #sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+
+  .label {
+    position: absolute;
+    top: 0; left: 0;
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    font-style: italic;
+    font-size: 14px;
+    line-height: 20px;
     color: var(--stamp-soft);
     white-space: nowrap;
     cursor: pointer;
     background: none;
     border: none;
-    padding: 2px 4px;
-    transition: opacity 0.3s;
+    padding: 0 4px;
+    transition: opacity 0.3s, color 0.15s;
   }
   .label:hover { color: #fff; }
-  .label.dim { opacity: 0.25; }
+  .label:focus-visible { outline: 2px solid var(--stamp-soft); outline-offset: 2px; }
+  .label.dim { opacity: 0.3; }
 
   .tip {
-    position: fixed;
+    position: absolute;
     top: 0; left: 0;
-    width: min(300px, calc(100vw - 32px));
+    width: min(300px, calc(100% - 32px));
     background: var(--paper-raised);
     color: var(--ink);
     border: 1px solid var(--ink);
@@ -151,7 +179,7 @@
   .tip a { font-family: 'Courier New', Courier, monospace; font-size: 11px; color: var(--sage); }
 
   .notice {
-    position: fixed;
+    position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
@@ -161,48 +189,90 @@
     color: var(--muted);
     pointer-events: none;
   }
+  .notice[hidden] { display: none; }
   .notice a { color: var(--stamp-soft); pointer-events: auto; }
 
-  @media (max-width: 640px) {
-    .top { padding: 14px 16px 24px; }
+  /* On phones the sky takes the full width, with the constellations in a strip below it. */
+  @media (max-width: 720px) {
+    body { display: flex; flex-direction: column; }
+    .rail { display: contents; }
+    .rail-head {
+      order: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px 12px;
+      padding: 12px 16px 10px;
+      background: var(--rail);
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { order: -1; font-size: 24px; margin: 0; }
+    .stats { order: 1; width: 100%; margin: 0; }
+    .stats { letter-spacing: 0.04em; }
+    .stats span { display: inline; margin-right: 8px; white-space: nowrap; }
+    .stage { order: 1; flex: 1; }
     .legend {
-      left: 0; right: 0; bottom: 0;
-      flex-direction: row;
+      order: 2;
+      flex: none;
+      display: flex;
+      gap: 6px;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 12px 16px 16px;
-      background: linear-gradient(transparent, var(--sky) 40%);
+      scrollbar-width: none;
+      padding: 10px 16px;
+      background: var(--rail);
+      border-top: 1px solid var(--line);
     }
-    .legend h2 { display: none; }
-    .legend button { flex: none; }
-    .hint { display: none; }
+    .legend button {
+      flex: none;
+      width: auto;
+      gap: 6px;
+      font-size: 14px;
+      padding: 6px 12px;
+      border: 1px solid #3A3A55;
+      border-radius: 20px;
+    }
+    .legend button.active { border-color: var(--stamp); background: var(--stamp); }
+    .legend button.active .count { color: #fff; }
+    .rail-foot { order: 3; padding: 0 16px 12px; border-top: none; background: var(--rail); }
+    .toggle { margin: 0; }
+    .key, .hint { display: none; }
+    .label { font-size: 13px; line-height: 16px; }
   }
 </style>
 </head>
 <body>
 
-<canvas id="sky" aria-label="A 3D map of the archive: each entry is a star, grouped by constellation"></canvas>
-
-<div class="top">
-  <div>
+<aside class="rail">
+  <div class="rail-head">
+    <a class="back" href="index.html">← Back to the archive</a>
     <h1>Constellations</h1>
     <div class="stats mono" id="stats">Loading the sky…</div>
   </div>
-  <a class="back" href="index.html">← Back to the archive</a>
-</div>
 
-<div id="labels"></div>
-<nav class="legend" id="legend" aria-label="Constellations"></nav>
+  <nav class="legend" id="legend" aria-label="Constellations"></nav>
 
-<div class="hint mono">
-  <div>Drag to turn · scroll to zoom</div>
-  <div>Point at a star to read it · click to open it</div>
-  <div><span class="key" style="background:var(--stamp-soft)"></span>Same constellation</div>
-  <div><span class="key" style="background:#19D3BE"></span>Cross-reference</div>
-</div>
+  <div class="rail-foot mono">
+    <button class="toggle mono" id="xrefToggle" type="button">Show cross-references</button>
+    <div class="key">
+      <div><span class="key-line" style="background:var(--stamp-soft)"></span>Same constellation</div>
+      <div><span class="key-line" style="background:var(--xref)"></span>Cross-reference</div>
+    </div>
+    <div class="hint">
+      <div>Drag to move · scroll to zoom</div>
+      <div>Point at a star to read it</div>
+      <div>Click a star to open it</div>
+    </div>
+  </div>
+</aside>
 
-<div class="tip" id="tip" hidden></div>
-<div class="notice" id="notice" hidden></div>
+<main class="stage" id="stage">
+  <canvas id="sky" aria-label="A star chart of the archive: each entry is a star, grouped by constellation"></canvas>
+  <div id="labels"></div>
+  <div class="tip" id="tip" hidden></div>
+  <div class="notice" id="notice" hidden></div>
+</main>
 
 <script type="importmap">
 { "imports": {
@@ -219,19 +289,23 @@ import firebaseConfig from './firebase-config.js';
 import { CONSTELLATIONS, categoryOf } from './constellation-names.js';
 import { entrantOf } from './class-names.js';
 
-// Each entry is a star. Stars in the same constellation cluster together and are joined
-// like a star chart; cross-references are drawn as brighter lines between stars.
+// A star chart. Each entry is a star and each constellation is a stick figure with its own
+// patch of sky. Cross-references stay hidden until someone asks for them, as they would
+// otherwise cut across every figure on the chart.
 
 const el = id => document.getElementById(id);
 const COLOR = {
-  star: new THREE.Color('#F07BB8'),
+  star: new THREE.Color('#F9D5E7'),
   starDim: new THREE.Color('#3A2C45'),
   hover: new THREE.Color('#FFFFFF'),
   link: new THREE.Color('#DFA0C2'),
   linkDim: new THREE.Color('#251F33'),
   xref: new THREE.Color('#19D3BE'),
-  xrefDim: new THREE.Color('#133B3A')
+  xrefSoft: new THREE.Color('#0E8378'),   // the usual color, so they don't compete with the figures
+  xrefDim: new THREE.Color('#133B3A'),
+  off: new THREE.Color('#000000')       // the arcs add light to the sky, so black draws nothing
 };
+const CALM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Same rules as the archive page: emptied entries are hidden, numbers have no gaps.
 const CONTENT_FIELDS = ['entrant', 'fragment', 'imageUrl', 'videoUrl', 'annotation', 'source', 'sourceUrl'];
 const isBlank = e => CONTENT_FIELDS.every(f => !String(e[f] || '').trim());
@@ -249,31 +323,27 @@ let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas: el('sky'), antialias: true });
 } catch (err) {
-  showNotice('This browser can\'t draw the 3D view. <a href="index.html">Back to the archive</a>');
+  showNotice('This browser can\'t draw the star chart. <a href="index.html">Back to the archive</a>');
   throw err;
 }
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#0F0F1D');
-scene.fog = new THREE.FogExp2('#0F0F1D', 0.0012);
-const camera = new THREE.PerspectiveCamera(55, 1, 1, 5000);
-camera.position.set(0, 80, 320);
+const FOV = 32;
+const camera = new THREE.PerspectiveCamera(FOV, 1, 1, 8000);
+camera.position.set(0, 0, 1000);
 
+// The chart is moved and zoomed like a map; it doesn't turn.
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.minDistance = 15;
-controls.maxDistance = 900;
-controls.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-controls.autoRotateSpeed = 0.35;
-controls.addEventListener('start', () => { controls.autoRotate = false; flight = null; });
+controls.enableRotate = false;
+controls.zoomToCursor = true;
+controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
+controls.addEventListener('start', () => { moved = true; flight = null; });
 
-function resize() {
-  renderer.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-}
-addEventListener('resize', resize);
-resize();
+let W = 1, H = 1;             // size of the sky on screen
+let moved = false;            // has anyone moved the view since it was last set?
 
 // A soft round glow, used for every star.
 function glowTexture() {
@@ -282,8 +352,8 @@ function glowTexture() {
   const g = c.getContext('2d');
   const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
   grad.addColorStop(0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.18, 'rgba(255,255,255,0.9)');
-  grad.addColorStop(0.45, 'rgba(255,255,255,0.25)');
+  grad.addColorStop(0.16, 'rgba(255,255,255,0.95)');
+  grad.addColorStop(0.3, 'rgba(255,255,255,0.3)');
   grad.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = grad;
   g.fillRect(0, 0, 64, 64);
@@ -293,28 +363,32 @@ function glowTexture() {
 }
 const glow = glowTexture();
 
-// Faint background stars, far away, so the sky has depth.
-(function dust() {
-  const n = 1400, pos = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    const v = new THREE.Vector3().randomDirection().multiplyScalar(1200 + Math.random() * 1200);
-    v.toArray(pos, i * 3);
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
-    size: 1.6, sizeAttenuation: false, color: '#8A8AA8', transparent: true, opacity: 0.6, fog: false
-  })));
-})();
+// Stars are sized by how large the chart is on screen, so they stay points on a small sky.
+const starMaterial = new THREE.ShaderMaterial({
+  uniforms: { map: { value: glow }, zoom: { value: 1 } },
+  vertexColors: true,
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  vertexShader: `
+    attribute float size;
+    uniform float zoom;
+    varying vec3 tint;
+    void main() {
+      tint = color;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = size * zoom;
+    }`,
+  fragmentShader: `
+    uniform sampler2D map;
+    varying vec3 tint;
+    void main() {
+      gl_FragColor = vec4(tint, 1.0) * texture2D(map, gl_PointCoord);
+      #include <colorspace_fragment>
+    }`
+});
 
-// ── LAYOUT ──
-// Each star is pulled toward its constellation's centre and pushes the other stars in it
-// away, so a constellation spreads out as it grows. The layout is worked out to rest before
-// it is drawn, so the sky is always still: when entries are added, the stars around them are
-// redrawn already moved aside, and stars keep their place between updates otherwise.
-const PULL = 0.01, PUSH = 110, DAMP = 0.86;
-const sizeFor = n => Math.cbrt(PUSH * n / PULL);   // about how wide n stars settle
-
+// Faint background stars, on layers far behind the chart, so the sky has depth as it moves.
 function seeded(seed) {
   return () => {
     seed |= 0; seed = seed + 0x6D2B79F5 | 0;
@@ -324,210 +398,286 @@ function seeded(seed) {
   };
 }
 
-const bodies = new Map();   // entry id → its star's position and velocity, kept across updates
-const homes = new Map();    // constellation name → its centre, kept across updates
-
-function layout(list) {
-  const groups = new Map();
-  list.forEach(e => {
-    const c = categoryOf(e);
-    if (!groups.has(c)) groups.set(c, []);
-    groups.get(c).push(e);
-  });
-  const names = [...groups.keys()].sort((a, b) => groups.get(b).length - groups.get(a).length || a.localeCompare(b));
-  // Homes go in a fixed order, so one constellation outgrowing another doesn't swap their places.
-  const rank = name => { const i = CONSTELLATIONS.indexOf(name); return i < 0 ? CONSTELLATIONS.length : i; };
-  const order = [...names].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
-  const n = names.length;
-  const widest = sizeFor(Math.max(1, ...names.map(name => groups.get(name).length)));
-  // Far enough apart that neighbouring constellations leave a wide gap of empty sky.
-  const R = n < 2 ? 0 : Math.max(170, (2 * widest + 110) * Math.sqrt(n / (4 * Math.PI)) / 0.8);
-  const clusters = names.map(name => {
-    // Spread the constellations evenly over a slightly flattened sphere.
-    const i = order.indexOf(name);
-    const y = n === 1 ? 0 : 1 - (i / (n - 1)) * 2;
-    const r = Math.sqrt(1 - y * y), phi = i * Math.PI * (3 - Math.sqrt(5));
-    const home = new THREE.Vector3(Math.cos(phi) * r, y * 0.75, Math.sin(phi) * r).multiplyScalar(R);
-    if (!homes.has(name)) homes.set(name, home.clone());
-    const center = homes.get(name);
-    const members = groups.get(name).sort((a, b) => a.id - b.id);
-    // When the sky is rearranged, a constellation moves to its new home whole, keeping its shape.
-    const shift = home.clone().sub(center);
-    center.copy(home);
-    members.forEach(e => {
-      if (bodies.has(e.id)) bodies.get(e.id).p.add(shift);
-      else {
-        const rnd = seeded(e.id * 7919);
-        bodies.set(e.id, {
-          p: new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(8).add(center),
-          v: new THREE.Vector3(), a: new THREE.Vector3()
-        });
-      }
-      e._pos = bodies.get(e.id).p;
-    });
-    return { name, home, center, members, radius: sizeFor(members.length), top: new THREE.Vector3() };
-  });
-  const ids = new Set(list.map(e => e.id));
-  for (const id of bodies.keys()) if (!ids.has(id)) bodies.delete(id);
-  for (const name of homes.keys()) if (!groups.has(name)) homes.delete(name);
-  return { clusters, R, widest };
-}
-
-// Moves every star a small step toward rest; returns how far the fastest one moved.
-const d = new THREE.Vector3();
-function step(clusters) {
-  let fastest = 0;
-  clusters.forEach(c => {
-    const m = c.members.map(e => bodies.get(e.id));
-    m.forEach(b => b.a.subVectors(c.center, b.p).multiplyScalar(PULL));
-    for (let i = 0; i < m.length; i++) {
-      for (let j = i + 1; j < m.length; j++) {
-        d.subVectors(m[i].p, m[j].p);
-        const r2 = Math.max(d.lengthSq(), 4);
-        d.multiplyScalar(PUSH / (r2 * Math.sqrt(r2)));
-        m[i].a.add(d);
-        m[j].a.sub(d);
-      }
-    }
-    let far = 0;
-    m.forEach(b => {
-      b.v.add(b.a.clampLength(0, 3)).multiplyScalar(DAMP);
-      b.p.add(b.v);
-      fastest = Math.max(fastest, b.v.length());
-      far = Math.max(far, b.p.distanceTo(c.center));
-    });
-    c.radius = far;
-  });
-  return fastest;
-}
-
-// Runs the layout until the stars stop, then holds them there.
-function settle(clusters) {
-  for (let k = 0; k < 3000 && step(clusters) > 0.0005; k++);
-  bodies.forEach(b => b.v.set(0, 0, 0));
-}
-
-// Joins a constellation's stars with the shortest set of lines, like a star chart.
-function starChart(points) {
-  const n = points.length, edges = [];
-  if (n < 2) return edges;
-  const used = new Array(n).fill(false);
-  const best = points.map(p => ({ d: p.distanceTo(points[0]), from: 0 }));
-  used[0] = true;
-  for (let k = 1; k < n; k++) {
-    let j = -1;
-    for (let i = 0; i < n; i++) if (!used[i] && (j < 0 || best[i].d < best[j].d)) j = i;
-    used[j] = true;
-    edges.push([best[j].from, j]);
-    for (let i = 0; i < n; i++) {
-      if (used[i]) continue;
-      const d = points[i].distanceTo(points[j]);
-      if (d < best[i].d) best[i] = { d, from: j };
-    }
+[[-700, 0.45], [-1800, 0.28]].forEach(([z, opacity], layer) => {
+  const n = 1100, pos = new Float32Array(n * 3), rnd = seeded(layer + 1);
+  for (let i = 0; i < n; i++) {
+    pos[i * 3] = (rnd() - 0.5) * 6000;
+    pos[i * 3 + 1] = (rnd() - 0.5) * 4000;
+    pos[i * 3 + 2] = z;
   }
-  return edges;
-}
-
-function chartLinks(clusters) {
-  const links = [];
-  clusters.forEach(c => starChart(c.members.map(e => e._pos)).forEach(([a, b]) => links.push([c.members[a], c.members[b], c])));
-  return links;
-}
-
-function lineGeometry(pairs) {
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pairs.length * 6), 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(pairs.length * 6), 3));
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
+    size: 1.3, sizeAttenuation: false, color: '#8A8AA8', transparent: true, opacity
+  })));
+});
+
+// ── FIGURES ──
+// A constellation is built like the ones in the real sky: a small body of three to five
+// stars, with limbs reaching out from some of its corners and forking as they get long. The
+// body and limbs are chosen from the constellation's name, so each has its own shape. Stars
+// are added oldest entry first, so new entries extend the figure and the stars already in it
+// stay where they are.
+const STEP = 24;              // the usual length of a line
+const TURN = Math.PI * 2;
+
+function crosses(a, b, c, d) {
+  const side = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  return side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0;
+}
+
+const angleApart = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+
+function grow(name, members) {
+  const plan = seeded([...name].reduce((h, ch) => Math.imul(h, 31) + ch.charCodeAt(0) | 0, 7));
+  const pts = [], edges = [], degree = [], limbs = [];
+  const add = p => { pts.push(p); degree.push(0); return pts.length - 1; };
+  const join = (a, b) => { edges.push([a, b]); degree[a]++; degree[b]++; };
+  // A new line must keep clear of other stars, cross nothing, and fan out from its neighbours.
+  const fits = (from, p, angle) => {
+    if (pts.some(q => Math.hypot(q.x - p.x, q.y - p.y) < STEP * 0.85)) return false;
+    return !edges.some(([s, t]) => {
+      if (s !== from && t !== from) return crosses(pts[from], p, pts[s], pts[t]);
+      const o = pts[s === from ? t : s];
+      return angleApart(angle, Math.atan2(o.y - pts[from].y, o.x - pts[from].x)) < 0.8;
+    });
+  };
+
+  const corners = 3 + Math.floor(plan() * 3);
+  const tilt = plan() * TURN, stretch = 1.1 + plan() * 0.8;
+
+  members.forEach((e, i) => {
+    const rnd = seeded(e.id * 7919);
+    const z = (rnd() - 0.5) * 12;
+    if (i < corners) {
+      const a = (i + (plan() - 0.5) * 0.5) / corners * TURN, x = Math.cos(a) * STEP * 0.8 * stretch, y = Math.sin(a) * STEP * 0.8;
+      add({ x: x * Math.cos(tilt) - y * Math.sin(tilt), y: x * Math.sin(tilt) + y * Math.cos(tilt), z });
+      if (i) join(i - 1, i);
+      if (i === corners - 1) {
+        join(i, 0);
+        // Limbs leave from only some corners, which is what keeps the figure lopsided.
+        const start = Math.floor(plan() * corners), count = 2 + Math.floor(plan() * (corners - 1));
+        for (let j = 0; j < count; j++) {
+          const tip = (start + j * 2) % corners;
+          const out = Math.atan2(pts[tip].y, pts[tip].x) + (plan() - 0.5) * 0.7;
+          if (!limbs.some(l => l.tip === tip)) limbs.push({ tip, prev: tip, heading: out, weight: j ? 0.35 + plan() * 0.5 : 1, length: 0 });
+        }
+      }
+      return;
+    }
+    let from = -1, point = null;
+    while (!point) {
+      const limb = limbs.filter(l => !l.dead).sort((a, b) => a.length / a.weight - b.length / b.weight)[0];
+      if (!limb) break;
+      for (let k = 0; k < 24 && !point; k++) {
+        const angle = limb.heading + (rnd() - 0.5) * (0.8 + k * 0.12), length = STEP * (1 + rnd() * 0.8);
+        const a = pts[limb.tip], p = { x: a.x + Math.cos(angle) * length, y: a.y + Math.sin(angle) * length, z };
+        if (degree[limb.tip] < 3 && fits(limb.tip, p, angle)) { point = p; from = limb.tip; limb.heading = angle; }
+      }
+      if (!point) { limb.dead = true; continue; }
+      limb.prev = limb.tip;
+      limb.tip = i;
+      limb.length++;
+      if (limb.length % 3 === 0) {
+        limbs.push({ tip: limb.prev, prev: limb.prev, heading: limb.heading + (plan() < 0.5 ? -1 : 1) * 1.15, weight: limb.weight * 0.7, length: 0 });
+      }
+    }
+    const cx = pts.reduce((s, p) => s + p.x, 0) / i, cy = pts.reduce((s, p) => s + p.y, 0) / i;
+    if (!point) {
+      // Boxed in: carry on outward from the outermost star that can take another line.
+      from = pts.map((p, j) => j).filter(j => degree[j] < 3)
+        .sort((a, b) => Math.hypot(pts[b].x - cx, pts[b].y - cy) - Math.hypot(pts[a].x - cx, pts[a].y - cy))[0];
+      const a = pts[from], angle = Math.atan2(a.y - cy, a.x - cx);
+      point = { x: a.x + Math.cos(angle) * STEP * 1.2, y: a.y + Math.sin(angle) * STEP * 1.2, z };
+    }
+    add(point);
+    join(from, i);
+  });
+  // Centre the figure on its own middle.
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const left = Math.min(...xs), right = Math.max(...xs), low = Math.min(...ys), high = Math.max(...ys);
+  pts.forEach(p => { p.x -= (left + right) / 2; p.y -= (low + high) / 2; });
+  return { pts, edges, w: right - left, h: high - low };
+}
+
+// ── LAYOUT ──
+// Each constellation and its label get a box, and the boxes are nudged apart until none
+// overlap. They start in the class's fixed order, so a constellation that grows moves its
+// neighbours aside without trading places with them.
+const GAP_X = 30, GAP_Y = 22;   // screen pixels between neighbouring boxes (half that on phones)
+const LABEL_GAP = 8;            // screen pixels between a figure and its label
+const MARGIN = 16;
+let sky = { cx: 0, cy: 0, scale: 1, w: 1, h: 1 };
+
+function arrange(clusters) {
+  const n = clusters.length;
+  if (!n) return;
+  const rank = name => { const i = CONSTELLATIONS.indexOf(name); return i < 0 ? CONSTELLATIONS.length : i; };
+  const order = [...clusters].sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
+  const aspect = Math.min(2.4, Math.max(0.5, W / H));
+  const gaps = W < 500 ? 0.5 : 1;
+  let scale = 1.5;                // world units per screen pixel; the boxes depend on it, so it takes a few passes
+  for (let pass = 0; pass < 5; pass++) {
+    order.forEach(c => {
+      c.hw = (Math.max(c.w, c.labelW * scale) + GAP_X * gaps * scale) / 2;
+      c.hh = (c.h + (c.labelH + LABEL_GAP + GAP_Y * gaps) * scale) / 2;
+    });
+    const spread = Math.sqrt(order.reduce((s, c) => s + c.hw * c.hh * 4, 0)) * 0.6;
+    order.forEach((c, i) => {
+      const r = Math.sqrt((i + 0.5) / n) * spread, phi = i * Math.PI * (3 - Math.sqrt(5));
+      c.x = Math.cos(phi) * r * Math.sqrt(aspect);
+      c.y = Math.sin(phi) * r / Math.sqrt(aspect);
+    });
+    for (let k = 0; k < 700; k++) {
+      // Everything drifts inward to fill the screen's shape, then the last rounds only separate.
+      if (k < 500) order.forEach(c => { c.x *= 1 - 0.012 / aspect; c.y *= 1 - 0.012 * aspect; });
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const a = order[i], b = order[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const ox = a.hw + b.hw - Math.abs(dx), oy = a.hh + b.hh - Math.abs(dy);
+          if (ox <= 0 || oy <= 0) continue;
+          if (ox < oy) { const s = (dx < 0 ? -ox : ox) / 2; a.x -= s; b.x += s; }
+          else { const s = (dy < 0 ? -oy : oy) / 2; a.y -= s; b.y += s; }
+        }
+      }
+    }
+    const left = Math.min(...order.map(c => c.x - c.hw)), right = Math.max(...order.map(c => c.x + c.hw));
+    const low = Math.min(...order.map(c => c.y - c.hh)), high = Math.max(...order.map(c => c.y + c.hh));
+    scale = Math.max((right - left) / (W - MARGIN * 2), (high - low) / (H - MARGIN * 2));
+    sky = { cx: (left + right) / 2, cy: (low + high) / 2, scale, w: right - left, h: high - low };
+  }
+  // The figure sits at the top of its box, with the label under it.
+  order.forEach(c => { c.fx = c.x; c.fy = c.y + (c.labelH + LABEL_GAP) * scale / 2; });
+}
+
+function lineGeometry(segments) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(segments * 6), 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(segments * 6), 3));
   return geo;
 }
 
-// Copies the stars' current positions into what is drawn.
-function sync() {
+// Cross-references are drawn as arcs that bow upward, so they read as different from a figure's lines.
+const ARC = 24;
+function arcPoint(a, b, t, out) {
+  const dx = b.x - a.x, dy = b.y - a.y, flip = dx > 0 ? 1 : -1, bow = 0.18;
+  const mx = (a.x + b.x) / 2 - dy * bow * flip, my = (a.y + b.y) / 2 + dx * bow * flip;
+  const u = 1 - t;
+  return out.set(u * u * a.x + 2 * u * t * mx + t * t * b.x, u * u * a.y + 2 * u * t * my + t * t * b.y, a.z + (b.z - a.z) * t);
+}
+
+// Works out where everything goes on screen and copies it into what is drawn.
+const p0 = new THREE.Vector3(), p1 = new THREE.Vector3();
+function place() {
+  arrange(world.clusters);
+  world.clusters.forEach(c => {
+    c.members.forEach((e, i) => e._pos.set(c.fx + c.pts[i].x, c.fy + c.pts[i].y, c.pts[i].z));
+    c.bottom.set(c.fx, c.fy - c.h / 2, 0);
+  });
   const sp = world.starGeo.attributes.position;
   world.stars.forEach((s, i) => s.e._pos.toArray(sp.array, i * 3));
   sp.needsUpdate = true;
-  [[world.linkGeo, world.links], [world.xrefGeo, world.xrefs]].forEach(([geo, pairs]) => {
-    const lp = geo.attributes.position;
-    pairs.forEach(([a, b], i) => { a._pos.toArray(lp.array, i * 6); b._pos.toArray(lp.array, i * 6 + 3); });
-    lp.needsUpdate = true;
+  // Lines stop just short of their stars, as on a printed chart.
+  const lp = world.linkGeo.attributes.position, gap = 4.5 * sky.scale;
+  world.links.forEach(([a, b], i) => {
+    const dir = p0.subVectors(b._pos, a._pos), len = dir.length();
+    const trim = Math.min(gap, len * 0.3);
+    p1.copy(a._pos).addScaledVector(dir, trim / len).toArray(lp.array, i * 6);
+    p1.copy(b._pos).addScaledVector(dir, -trim / len).toArray(lp.array, i * 6 + 3);
   });
-  world.clusters.forEach(c => { c.top.copy(c.center).y += c.radius + 14; });
+  lp.needsUpdate = true;
+  const xp = world.xrefGeo.attributes.position;
+  world.xrefs.forEach(([a, b], i) => {
+    for (let k = 0; k < ARC; k++) {
+      arcPoint(a._pos, b._pos, k / ARC, p0).toArray(xp.array, (i * ARC + k) * 6);
+      arcPoint(a._pos, b._pos, (k + 1) / ARC, p0).toArray(xp.array, (i * ARC + k) * 6 + 3);
+    }
+  });
+  xp.needsUpdate = true;
 }
 
 // ── BUILD ──
 let world = null;
 let focus = null;      // name of the constellation being looked at, or null for all
+let peek = null;       // name of the constellation under the pointer in the list or on the chart
 let hovered = null;    // the star under the pointer
 let pinned = null;     // the star tapped on a touch screen
-let homeDistance = 320;
-let firstBuild = true;
+let showXrefs = false; // are the cross-references showing?
+let homeDistance = 1000;
 
 function build(all) {
   const list = all.filter(e => !isBlank(e));
   const shownNo = new Map(list.map(e => e.id).sort((a, b) => a - b).map((id, i) => [id, i + 1]));
 
   if (world) {
-    world.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+    world.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     scene.remove(world.group);
   }
   el('labels').innerHTML = '';
 
-  const wasAt = focus && homes.has(focus) ? homes.get(focus).clone() : null;
-  const { clusters, R, widest } = layout(list);
-  settle(clusters);
-  // If the constellation being looked at was moved, the camera moves with it.
-  if (wasAt && homes.has(focus)) {
-    const shift = homes.get(focus).clone().sub(wasAt);
-    controls.target.add(shift);
-    camera.position.add(shift);
-    if (flight) { flight.toT.add(shift); flight.toP.add(shift); }
-  }
-  const group = new THREE.Group();
-  const stars = clusters.flatMap(c => c.members.map(e => ({ e, no: shownNo.get(e.id), cluster: c })));
-
-  const starGeo = new THREE.BufferGeometry();
-  starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(stars.length * 3), 3));
-  starGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(stars.length * 3), 3));
-  group.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
-    size: 18, map: glow, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-  })));
-
-  const links = chartLinks(clusters);
-  const byId = new Map(list.map(e => [e.id, e]));
-  const clusterOf = new Map(stars.map(s => [s.e.id, s.cluster]));
-  const xrefs = list.filter(e => e.xrefId && e.xrefId !== e.id && byId.has(e.xrefId)).map(e => [e, byId.get(e.xrefId)]);
-
-  const linkGeo = lineGeometry(links), xrefGeo = lineGeometry(xrefs);
-  group.add(new THREE.LineSegments(linkGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5, depthWrite: false })));
-  group.add(new THREE.LineSegments(xrefGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending })));
-  scene.add(group);
+  const groups = new Map();
+  list.forEach(e => {
+    e._pos = new THREE.Vector3();
+    const c = categoryOf(e);
+    if (!groups.has(c)) groups.set(c, []);
+    groups.get(c).push(e);
+  });
+  const names = [...groups.keys()].sort((a, b) => groups.get(b).length - groups.get(a).length || a.localeCompare(b));
+  const clusters = names.map(name => {
+    const members = groups.get(name).sort((a, b) => a.id - b.id);
+    return { name, members, bottom: new THREE.Vector3(), ...grow(name, members) };
+  });
 
   clusters.forEach(c => {
     const b = document.createElement('button');
     b.className = 'label';
     b.textContent = c.name;
     b.addEventListener('click', () => flyTo(c));
+    b.addEventListener('pointerenter', ev => { if (ev.pointerType === 'mouse') setPeek(c); });
+    b.addEventListener('pointerleave', () => setPeek(null));
     el('labels').appendChild(b);
     c.label = b;
+    c.labelW = b.offsetWidth;
+    c.labelH = b.offsetHeight;
   });
 
+  const byId = new Map(list.map(e => [e.id, e]));
+  const xrefs = list.filter(e => e.xrefId && e.xrefId !== e.id && byId.has(e.xrefId)).map(e => [e, byId.get(e.xrefId)]);
+  const crossed = new Set(xrefs.flat());
+  const clusterOf = new Map(clusters.flatMap(c => c.members.map(e => [e, c])));
+
+  // Stars vary a little in brightness, as in the sky; the cross-referenced ones stand out.
+  const stars = clusters.flatMap(c => c.members.map(e => ({
+    e, no: shownNo.get(e.id), cluster: c,
+    size: crossed.has(e) ? 25 : 15 + seeded(e.id * 104729)() * 6
+  })));
+
+  const group = new THREE.Group();
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(stars.length * 3), 3));
+  starGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(stars.length * 3), 3));
+  starGeo.setAttribute('size', new THREE.BufferAttribute(new Float32Array(stars.length), 1));
+  const links = clusters.flatMap(c => c.edges.map(([a, b]) => [c.members[a], c.members[b], c]));
+  const linkGeo = lineGeometry(links.length), xrefGeo = lineGeometry(xrefs.length * ARC);
+  const drawn = [
+    new THREE.Points(starGeo, starMaterial),
+    new THREE.LineSegments(linkGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, depthWrite: false })),
+    new THREE.LineSegments(xrefGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }))
+  ];
+  drawn.forEach(o => { o.frustumCulled = false; group.add(o); });
+  scene.add(group);
+
   if (focus && !clusters.some(c => c.name === focus)) focus = null;
+  if (peek && !clusters.some(c => c.name === peek)) peek = null;
   if (hovered) hovered = stars.find(s => s.e.id === hovered.e.id) || null;
   if (pinned) pinned = stars.find(s => s.e.id === pinned.e.id) || null;
   world = { group, stars, clusters, links, xrefs, clusterOf, starGeo, linkGeo, xrefGeo };
-  sync();
 
-  // Narrow (portrait) screens need the camera further back to fit the whole sky.
-  homeDistance = Math.max(220, (R + widest) * 2.1) * Math.max(1, 0.9 / camera.aspect);
-  controls.maxDistance = homeDistance * 2.5;
-  scene.fog.density = 0.55 / (homeDistance + R + widest);
-  if (firstBuild) {
-    firstBuild = false;
-    camera.position.set(0, homeDistance * 0.3, homeDistance);
-    controls.target.set(0, 0, 0);
-  }
+  place();
+  frameView();
 
-  el('stats').textContent = `${list.length} fragments · ${clusters.length} constellations · ${xrefs.length} cross-references`;
+  el('stats').innerHTML = [[list.length, 'fragments'], [clusters.length, 'constellations'], [xrefs.length, 'cross-references']].map(([n, what]) => `<span>${n} ${what}</span>`).join(' ');
   renderLegend();
   paint();
   showTip();
@@ -536,67 +686,134 @@ function build(all) {
 // Colors stars and lines: the constellation in focus is bright, the rest fade back.
 function paint() {
   if (!world) return;
-  const lit = c => !focus || c.name === focus;
-  const sc = world.starGeo.attributes.color;
+  const lit = c => (!focus && !peek) || c.name === focus || c.name === peek;
+  const star = pinned || hovered;
+  const sc = world.starGeo.attributes.color, ss = world.starGeo.attributes.size;
   world.stars.forEach((s, i) => {
-    const col = (s === hovered || s === pinned) ? COLOR.hover : lit(s.cluster) ? COLOR.star : COLOR.starDim;
+    const col = s === star ? COLOR.hover : lit(s.cluster) ? COLOR.star : COLOR.starDim;
     col.toArray(sc.array, i * 3);
+    ss.array[i] = s === star ? s.size * 1.5 : s.size;
   });
-  sc.needsUpdate = true;
+  sc.needsUpdate = ss.needsUpdate = true;
   const lc = world.linkGeo.attributes.color;
   world.links.forEach(([, , c], i) => {
     const col = lit(c) ? COLOR.link : COLOR.linkDim;
     col.toArray(lc.array, i * 6); col.toArray(lc.array, i * 6 + 3);
   });
   lc.needsUpdate = true;
+  const looking = focus || peek;
   const xc = world.xrefGeo.attributes.color;
   world.xrefs.forEach(([a, b], i) => {
-    const on = lit(world.clusterOf.get(a.id)) || lit(world.clusterOf.get(b.id));
-    const col = on ? COLOR.xref : COLOR.xrefDim;
-    col.toArray(xc.array, i * 6); col.toArray(xc.array, i * 6 + 3);
+    const touched = (star && (star.e === a || star.e === b)) ||
+      (looking && (lit(world.clusterOf.get(a)) || lit(world.clusterOf.get(b))));
+    const col = !showXrefs ? COLOR.off : touched ? COLOR.xref : looking ? COLOR.xrefDim : COLOR.xrefSoft;
+    for (let k = 0; k < ARC * 2; k++) col.toArray(xc.array, (i * ARC * 2 + k) * 3);
   });
   xc.needsUpdate = true;
   world.clusters.forEach(c => c.label.classList.toggle('dim', !lit(c)));
 }
 
-function renderLegend() {
-  const nav = el('legend');
-  nav.innerHTML = '<h2 class="mono">Constellations</h2>';
-  const add = (text, count, c) => {
-    const b = document.createElement('button');
-    b.innerHTML = `${escapeHtml(text)}<span class="count">${count}</span>`;
-    b.className = (c ? focus === c.name : focus === null) ? 'active' : '';
-    b.addEventListener('click', () => flyTo(c));
-    nav.appendChild(b);
-  };
-  add('All', world.stars.length, null);
-  world.clusters.forEach(c => add(c.name, c.members.length, c));
+function setPeek(c) {
+  peek = c ? c.name : null;
+  paint();
 }
 
-// ── CAMERA FLIGHTS ──
+function renderLegend() {
+  const nav = el('legend');
+  nav.innerHTML = '';
+  const add = (text, count, c) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span>${escapeHtml(text)}</span><span class="count">${count}</span>`;
+    b.addEventListener('click', () => flyTo(c));
+    if (c) {
+      b.addEventListener('pointerenter', ev => { if (ev.pointerType === 'mouse') setPeek(c); });
+      b.addEventListener('pointerleave', () => setPeek(null));
+    }
+    b.dataset.name = c ? c.name : '';
+    nav.appendChild(b);
+  };
+  add('The whole sky', world.stars.length, null);
+  world.clusters.forEach(c => add(c.name, c.members.length, c));
+  markLegend();
+}
+
+function markLegend() {
+  [...el('legend').children].forEach(b => {
+    const on = b.dataset.name === (focus || '');
+    b.classList.toggle('active', on);
+    if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+  });
+}
+
+el('xrefToggle').addEventListener('click', ev => {
+  showXrefs = !showXrefs;
+  ev.currentTarget.textContent = showXrefs ? 'Hide cross-references' : 'Show cross-references';
+  ev.currentTarget.classList.toggle('on', showXrefs);
+  paint();
+});
+
+// ── CAMERA ──
+const toRad = Math.PI / 180;
+const distanceFor = scale => H * scale / 2 / Math.tan(FOV * toRad / 2);
+
+// Where the camera should be to show one constellation, or the whole sky.
+function viewOf(c) {
+  if (!c) return { target: new THREE.Vector3(sky.cx, sky.cy, 0), distance: homeDistance };
+  const pad = STEP * 5;
+  const scale = Math.max((c.w + pad) / W, (c.h + pad) / H);
+  return { target: new THREE.Vector3(c.fx, c.fy, 0), distance: Math.min(homeDistance, distanceFor(scale)) };
+}
+
+function jumpTo(view) {
+  flight = null;
+  controls.target.copy(view.target);
+  camera.position.copy(view.target).setZ(view.distance);
+}
+
+// Fits the view to the sky after anything changes its size or shape. A view someone chose stays put.
+function frameView() {
+  homeDistance = distanceFor(sky.scale);
+  controls.minDistance = homeDistance * 0.06;
+  controls.maxDistance = homeDistance * 1.25;
+  controls.cursor.set(sky.cx, sky.cy, 0);
+  controls.maxTargetRadius = Math.max(sky.w, sky.h) * 0.6;
+  const c = focus && world.clusters.find(x => x.name === focus);
+  if (c) jumpTo(viewOf(c));
+  else if (!moved) jumpTo(viewOf(null));
+}
+
 let flight = null;
 function flyTo(c) {
   focus = c ? c.name : null;
   pinned = null;
-  renderLegend();
+  moved = false;
+  markLegend();
   paint();
   showTip();
-  controls.autoRotate = false;
-  const toT = c ? c.center.clone() : new THREE.Vector3();
-  const dir = camera.position.clone().sub(controls.target).normalize();
-  const dist = c ? Math.max(c.radius, 10) * 3.2 + 45 : homeDistance;
+  const { target, distance } = viewOf(c);
   flight = {
-    t0: performance.now(), dur: 900,
-    fromT: controls.target.clone(), toT,
-    fromP: camera.position.clone(), toP: toT.clone().add(dir.multiplyScalar(dist))
+    t0: performance.now(), dur: CALM ? 0 : 900,
+    fromT: controls.target.clone(), toT: target,
+    fromP: camera.position.clone(), toP: target.clone().setZ(distance)
   };
 }
+
+function resize() {
+  W = Math.max(1, el('stage').clientWidth);
+  H = Math.max(1, el('stage').clientHeight);
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  if (world) { place(); frameView(); }
+}
+new ResizeObserver(resize).observe(el('stage'));
+resize();
 
 // ── POINTING AT STARS ──
 const v = new THREE.Vector3();
 function toScreen(p) {
   v.copy(p).project(camera);
-  return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, behind: v.z > 1 };
+  return { x: (v.x + 1) / 2 * W, y: (1 - v.y) / 2 * H };
 }
 
 function starAt(x, y) {
@@ -604,7 +821,6 @@ function starAt(x, y) {
   let best = null, bestD = 20 * 20;
   world.stars.forEach(s => {
     const p = toScreen(s.e._pos);
-    if (p.behind) return;
     const d = (p.x - x) ** 2 + (p.y - y) ** 2;
     if (d < bestD) { bestD = d; best = s; }
   });
@@ -634,24 +850,27 @@ function placeTip() {
   const p = toScreen(s.e._pos);
   const w = tip.offsetWidth, h = tip.offsetHeight;
   let x = p.x + 16, y = p.y + 16;
-  if (x + w > innerWidth - 8) x = p.x - w - 16;
-  if (y + h > innerHeight - 8) y = p.y - h - 16;
+  if (x + w > W - 8) x = p.x - w - 16;
+  if (y + h > H - 8) y = p.y - h - 16;
   tip.style.transform = `translate(${Math.max(8, x)}px, ${Math.max(8, y)}px)`;
 }
 
 const canvas = renderer.domElement;
+const lean = new THREE.Vector2(), leanTo = new THREE.Vector2();
 let down = null;
 canvas.addEventListener('pointermove', ev => {
-  if (ev.pointerType !== 'mouse' || pinned) return;
-  const s = starAt(ev.clientX, ev.clientY);
+  if (ev.pointerType !== 'mouse') return;
+  if (!CALM) leanTo.set(ev.offsetX / W - 0.5, ev.offsetY / H - 0.5);
+  if (pinned) return;
+  const s = starAt(ev.offsetX, ev.offsetY);
   canvas.style.cursor = s ? 'pointer' : 'grab';
   if (s !== hovered) { hovered = s; paint(); showTip(); }
 });
-canvas.addEventListener('pointerleave', () => { if (hovered && !pinned) { hovered = null; paint(); showTip(); } });
+canvas.addEventListener('pointerleave', () => { leanTo.set(0, 0); if (hovered && !pinned) { hovered = null; paint(); showTip(); } });
 canvas.addEventListener('pointerdown', ev => { down = { x: ev.clientX, y: ev.clientY }; });
 canvas.addEventListener('pointerup', ev => {
   if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 6) return;   // a drag, not a click
-  const s = starAt(ev.clientX, ev.clientY);
+  const s = starAt(ev.offsetX, ev.offsetY);
   if (s && ev.pointerType === 'mouse') { location.href = `index.html#entry-${s.e.id}`; return; }
   // On touch screens a tap shows the star's card, which has the link to open it.
   pinned = s;
@@ -663,30 +882,37 @@ canvas.addEventListener('pointerup', ev => {
 // ── LABELS & ANIMATION ──
 function placeLabels() {
   world.clusters.forEach(c => {
-    const p = toScreen(c.top);
-    const on = !p.behind && p.x > -100 && p.x < innerWidth + 100 && p.y > -40 && p.y < innerHeight + 40;
+    const p = toScreen(c.bottom);
+    const on = p.x > -120 && p.x < W + 120 && p.y > -40 && p.y < H + 40;
     c.label.style.display = on ? '' : 'none';
-    if (on) c.label.style.transform = `translate(-50%, -100%) translate(${p.x}px, ${p.y}px)`;
+    if (on) c.label.style.transform = `translate(-50%, ${LABEL_GAP}px) translate(${p.x}px, ${p.y}px)`;
   });
 }
 
+const rest = new THREE.Vector3();
 function animate(now) {
   requestAnimationFrame(animate);
-  // While nobody is steering, the view eases back to keep the whole sky in frame as it grows.
-  if (controls.autoRotate && !focus && !flight) {
-    const dist = camera.position.distanceTo(controls.target);
-    camera.position.sub(controls.target).setLength(dist + (homeDistance - dist) * 0.01).add(controls.target);
-  }
   if (flight) {
-    const k = Math.min(1, (now - flight.t0) / flight.dur);
+    const k = flight.dur ? Math.min(1, (now - flight.t0) / flight.dur) : 1;
     const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
     controls.target.lerpVectors(flight.fromT, flight.toT, ease);
     camera.position.lerpVectors(flight.fromP, flight.toP, ease);
     if (k === 1) flight = null;
   }
   controls.update();
+  const distance = camera.position.z - controls.target.z;
+  const pxPerUnit = H / (2 * distance * Math.tan(FOV * toRad / 2));
+  starMaterial.uniforms.zoom.value = renderer.getPixelRatio() * Math.min(1.7, Math.max(0.3, pxPerUnit ** 0.75));
+  // The camera leans a touch toward the pointer, which lifts the chart off the stars behind it.
+  lean.lerp(leanTo, 0.05);
+  rest.copy(camera.position);
+  camera.position.x += lean.x * distance * 0.05;
+  camera.position.y -= lean.y * distance * 0.05;
+  camera.lookAt(controls.target);
+  camera.updateMatrixWorld();
   renderer.render(scene, camera);
   if (world) { placeLabels(); placeTip(); }
+  camera.position.copy(rest);
 }
 requestAnimationFrame(animate);
 
