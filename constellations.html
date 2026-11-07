@@ -31,11 +31,13 @@
     font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
   }
 
-  body {
+  /* Its own box, not the body: browser extensions add elements to the body, and those would take a grid slot. */
+  .app {
+    position: fixed;
+    inset: 0;
     display: grid;
     grid-template-columns: 264px minmax(0, 1fr);
-    height: 100vh;
-    height: 100dvh;
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .mono {
@@ -194,7 +196,7 @@
 
   /* On phones the sky takes the full width, with the constellations in a strip below it. */
   @media (max-width: 720px) {
-    body { display: flex; flex-direction: column; }
+    .app { display: flex; flex-direction: column; }
     .rail { display: contents; }
     .rail-head {
       order: 0;
@@ -244,6 +246,7 @@
 </head>
 <body>
 
+<div class="app">
 <aside class="rail">
   <div class="rail-head">
     <a class="back" href="index.html">← Back to the archive</a>
@@ -273,6 +276,7 @@
   <div class="tip" id="tip" hidden></div>
   <div class="notice" id="notice" hidden></div>
 </main>
+</div>
 
 <script type="importmap">
 { "imports": {
